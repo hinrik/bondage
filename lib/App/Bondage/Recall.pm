@@ -272,19 +272,18 @@ sub recall {
 
 =head1 NAME
 
-POE::Component::IRC::Plugin::Proxy::Recall - A PoCo-IRC plugin which
-can greet proxy clients with the messages they missed while they
-were away, among other things.
+App::Bondage::Recall - A PoCo-IRC plugin which can greet proxy clients
+with the messages they missed while they were away, among other things.
 
 =head1 SYNOPSIS
 
- use Bondage::Recall;
+ use App::Bondage::Recall;
 
- $irc->plugin_add('Recall', Bondage::Recall->new( Mode => 'missed' ));
+ $irc->plugin_add('Recall', App::Bondage::Recall->new( Mode => 'missed' ));
 
 =head1 DESCRIPTION
 
-POE::Component::IRC::Plugin::Proxy::Recall is a L<POE::Component::IRC|POE::Component::IRC> plugin.
+App::Bondage::Recall is a L<POE::Component::IRC|POE::Component::IRC> plugin.
 It uses on Log::Log4perl to log messages and CTCP ACTIONs to either #some_channel.log or
 some_nickname.log in the supplied path.
 

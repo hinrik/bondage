@@ -71,20 +71,19 @@ sub message {
 
 =head1 NAME
 
-POE::Component::IRC::Plugin::Proxy::Away - A PoCo-IRC plugin which
-changes the away status based on the presence of proxy clients, by
-listening for 'irc_proxy_authed' and 'irc_proxy_close' events.
+App::Bondage::Away - A PoCo-IRC plugin which changes the away status
+based on the presence of proxy clients, by listening for
+'irc_proxy_authed' and 'irc_proxy_close' events.
 
 =head1 SYNOPSIS
 
- use POE::Component::IRC::Plugin::Proxy::Away;
+ use App::Bondage::Away;
 
- $irc->plugin_add( 'Away', POE::Component::IRC::Plugin::Proxy::Away->new(
-                                     Message => "I'm out to lunch") );
+ $irc->plugin_add( 'Away', App::Bondage::Away->new( Message => "I'm out to lunch" ));
 
 =head1 DESCRIPTION
 
-POE::Component::IRC::Plugin::Proxy::Away is a L<POE::Component::IRC|POE::Component::IRC> plugin.
+App::Bondage::Away is a L<POE::Component::IRC|POE::Component::IRC> plugin.
 When the last proxy client detaches, it changes the status to away, with the supplied away message.
 
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>

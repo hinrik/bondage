@@ -84,20 +84,18 @@ sub cycling {
 
 =head1 NAME
 
-POE::Component::IRC::Plugin::Cycle - A PoCo-IRC plugin which
-cycles (parts and rejoins) channels if they become empty and
-opless, in order to gain ops.
+App::Bondage::Cycle - A PoCo-IRC plugin which cycles (parts and rejoins)
+channels if they become empty and opless, in order to gain ops.
 
 =head1 SYNOPSIS
 
- use POE::Component::IRC::Plugin::Cycle;
+ use App::Bondage::Cycle;
 
- $irc->plugin_add( 'Cycle', POE::Component::IRC::Plugin::Cycle->new(
-                                     Message => "I'm out to lunch") );
+ $irc->plugin_add( 'Cycle', App::Bondage::Cycle->new();
 
 =head1 DESCRIPTION
 
-POE::Component::IRC::Plugin::Cycle is a L<POE::Component::IRC|POE::Component::IRC> plugin.
+App::Bondage::Cycle is a L<POE::Component::IRC|POE::Component::IRC> plugin.
 When someone quits, gets kicked, or parts a channel, the plugin will cycle the channel
 if the IRC component is alone on that channel and is not a channel operator.
 

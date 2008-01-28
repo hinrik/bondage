@@ -1,0 +1,11 @@
+0.2.0 Mon Jan 28 06:24:13 GMT 2008
+    - Uploaded to CPAN as App::Bondage
+    - Moved most features into separate PoCo-IRC plugins
+    - Rewrote a lot of stuff
+
+0.1.1 Mon Jan 14 08:33:22 GMT 2008
+    - A change log!
+    - Fix ignoring WHO replies requested by PoCo::IRC::State
+    - Fix auto away not working properly when reconnecting
+    - Require POE-Component-IRC 5.52, so that CTCP commands
+      (/me and the like) will be forwarded

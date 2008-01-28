@@ -1,0 +1,350 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use App::Bondage;
+use App::Bondage::Common;
+use Digest::MD5 qw(md5_hex);
+use Getopt::Long qw(:config auto_help);
+use Pod::Usage;
+use POE;
+use POE::Component::Daemon;
+
+my $work_dir = "$ENV{HOME}/.$APP_NAME";
+my $debug = 0;
+
+GetOptions(
+    'c|crypt'     => \&encrypt_pass,
+    'd|debug'     => \$debug,
+    'v|version'   => sub { print "$APP_NAME $VERSION, $HOMEPAGE\n"; exit },
+    'w|workdir=s' => \$work_dir,
+) or pod2usage();
+
+my $bouncer = App::Bondage->new( Debug => $debug, Work_dir => $work_dir );
+POE::Component::Daemon->spawn( detach => 1 ) unless $debug;
+$poe_kernel->run();
+
+sub encrypt_pass {
+    print "Password:";
+    system('stty -echo');
+    chomp (my $password = <STDIN>);
+    system('stty echo');
+    print "\nEncrypted password: " . md5_hex($password, $CRYPT_SALT) . "\n";
+    exit;
+}
+
+=head1 NAME
+
+bondage - A featureful easy-to-use IRC bouncer
+
+=head1 SYNOPSIS
+
+B<bondage> [options]
+
+ Options:
+   -c, --crypt             Prompts you for a password and encrypts it
+   -d, --debug             Skip daemonizing and print everything to STDOUT
+   -h, --help              Display this help message
+   -v, --version           Display version information
+   -w DIR, --workdir=DIR   Working directory (default: ~/.bondage)
+
+=head1 DESCRIPTION
+
+B<bondage> is an IRC bouncer. It acts as a proxy between multiple
+IRC servers and multiple IRC clients. It makes it easy to stay
+permanently connected to IRC. It is mostly made up of reusable
+components. Very little is made from scratch here. If it is,
+it will be made modular and reusable, probably as a 
+L<POE::Component::IRC|POE::Component::IRC> plugin. This keeps
+the code short and (hopefully) well tested by others.
+
+=head2 RATIONALE
+
+I wrote B<bondage> because no other IRC bouncer out there fit my needs.
+Either they were missing essential features, or they were implemented
+in an undesirable (if not buggy) way. I've tried to make B<bondage>
+stay out of your way and be as transparent as possible.
+It's supposed to be a proxy, after all.
+
+=head2 FEATURES
+
+=over
+
+=item Easy setup
+
+B<bondage> is easy to get up and running. In the configuration file,
+you just have to specify the port it will listen on, the password,
+and some IRC server(s) you want B<bondage> to connect to. Everything
+else has sensible defaults, though you might want to use a custom
+nickname and pick some channels to join on connect.
+
+=item Logging
+
+B<bondage> can log both public and private messages for you.
+All log files are in UTF-8.
+
+=item Stays connected
+
+B<bondage> will reconnect to IRC when it gets disconnected or
+the IRC server stops responding.
+
+=item Recall messages
+
+B<bondage> can send you all the messages you missed since you detached,
+or it can send you all messages received since it connected to
+the IRC server, or neither. This feature is based on similar features
+found in B<miau>, B<dircproxy>, and B<ctrlproxy>.
+
+=item Auto-away
+
+B<bondage> will set your status to away when no clients are attached.
+
+=item Reclaim nickname
+
+B<bondage> will periodically try to change to your preferred nickname
+if it is taken.
+
+=item Flood protection
+
+B<bondage> utilizes POE::Component::IRC's flood protection to ensure
+that you never flood yourself off the IRC server.
+
+=item NickServ support
+
+B<bondage> can identify with NickServ for you when needed.
+
+=item Rejoin channel if kicked
+
+B<bondage> can try to rejoin a channel if you get kicked from it.
+
+=item Encrypted passwords
+
+B<bondage> supports encrypted passwords in its configuration file
+for added security.
+
+=item SSL support
+
+You can connect to SSL-enabled IRC servers, and make B<bondage> require
+SSL for client connections.
+
+=item IPv6 support
+
+B<bondage> can connect to IPv6 IRC servers, and also listen for client
+connections via IPv6.
+
+=item Cycle empty channels
+
+B<bondage> can cycle (part and rejoin) channels for you when they
+become empty in order to gain ops.
+
+=item CTCP replies
+
+B<bondage> will reply to CTCP VERSION requests when you are offline.
+
+=back
+
+=head1 CONFIGURATION
+
+The following options are recognized in the configuration file
+which should be C<~/.bondage/config.yml>
+
+B<Note>: You may not use tabs for indentation.
+
+=over
+
+=item listen_host
+
+(optional, default: "0.0.0.0")
+
+The host that B<bondage> listens on and accepts connections from.
+This is the host you use to connect to B<bondage>.
+
+=item listen_port
+
+(required, no default)
+
+The port B<bondage> binds to.
+
+=item listen_ssl
+
+(optional, default: false)
+
+Set this to true if you want bondage to require the use of SSL
+for client connections.
+More information:
+http://www.akadia.com/services/ssh_test_certificate.html
+
+=item password
+
+(required, no default)
+
+The password you use to connect to B<bondage>. If it is 32 letters,
+it is assumed to be encrypted (see C<bondage -c>);
+
+=back
+
+B<Note:> The rest of the options are specific to the B<network>
+block they appear in.
+
+=over
+
+=item bind_host
+
+(optional, default: "0.0.0.0")
+
+The host that B<bondages> binds to and connects to IRC from.
+Useful if you have multiple IPs and want to choose which one
+to IRC from.
+
+=item server_host
+
+(required, no default)
+
+The IRC server you want B<bondage> to connect to.
+
+=item server_port
+
+(optional, default: 6667)
+
+The port on the IRC server you want to use.
+
+=item server_pass
+
+(optional, no default)
+
+The IRC server password, if there is one.
+
+=item use_ssl
+
+(optional, default: false)
+
+Set this to true if you want to use SSL to communicate with
+the IRC server.
+
+=item nickserv_pass
+
+(optional, no default)
+
+Your NickServ password on the IRC network, if you have one.
+B<bondage> will identify with NickServ with this password on connect,
+and whenever you switch to your original nickname.
+
+=item nickname
+
+(optional, default: your UNIX user name)
+
+Your IRC nick name.
+
+=item username
+
+(optional, default: your UNIX user name)
+
+Your IRC user name.
+
+=item realname
+
+(optional, default: your UNIX real name, if any)
+
+Your IRC real name, or email, or whatever.
+
+=item channels
+
+(optional, no default)
+
+A list of all your channels, with an optionl password after each colon.
+Every line must include a colon. E.g.:
+
+ channels:
+   "chan1" :
+   "chan2" : "password"
+   "chan3" :
+
+=item recall_mode
+
+(optional, default: "new")
+
+How many channel messages you want B<bondage> to remember, and then send
+to you when you attach.
+
+"new": B<bondage> will only recall the channel messages you missed since
+the last time you detached from B<bondage>.
+
+"none": B<bondage> will not recall any channel messages.
+
+"all": B<bondage> will recall all channel messages, and will
+only discard them when you leave the channel (wilfully).
+
+B<Note>: B<bondage> will always recall private messages that you missed
+while you were away, regardless of this option.
+
+=item log_public
+
+(optional, default: false)
+
+Set to true if you want B<bondage> to log all your public messages.
+They will be saved as C<~/.bondage/logs/some_network/#some_channel.log>
+
+=item log_private
+
+(optional, default: false)
+
+Set to true if you want B<bondage> to log all private messages.
+They will be saved as C<~/.bondage/logs/some_network/some_nickname.log>
+
+=item auto_cycle
+
+(optional, default: false)
+
+Set to true if you want B<bondage> to cycle (part and rejoin)
+opless channels if they become empty.
+
+=item kick_rejoin
+
+(optional, default: false)
+
+Set to true if you want B<bondage> to try to rejoin a channel (once)
+if you get kicked from it.
+
+=back
+
+=head1 DEPENDENCIES
+
+The following CPAN distributions are required:
+
+ POE
+ POE-Component-Client-DNS
+ POE-Component-Daemon
+ POE-Component-IRC
+ POE-Component-SSLify (only if you need SSL support)
+ POE-Filter-IRCD
+ Socket6 (only if you need ipv6 support)
+ YAML-Syck
+
+=head1 BUGS
+
+Report all bugs, feature requests, etc, here:
+http://code.google.com/p/bondage/issues
+
+=head1 AUTHOR
+
+Hinrik E<Ouml>rn SigurE<eth>sson, hinrik.sig@gmail.com
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2008 Hinrik E<Ouml>rn SigurE<eth>sson
+
+This program is free software, you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+Other useful IRC bouncers:
+
+ http://miau.sourceforge.net
+ http://znc.sourceforge.net
+ http://dircproxy.securiweb.net
+ http://ctrlproxy.vernstok.nl
+ http://www.psybnc.at
+ http://irssi.org/documentation/proxy
+ http://bip.t1r.net
+

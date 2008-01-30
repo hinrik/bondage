@@ -99,17 +99,17 @@ sub _client_error {
 
 sub _client_input {
     my ($self, $kernel, $input, $id) = @_[OBJECT, KERNEL, ARG0, ARG1];
+    my $info = $self->{wheels}->{$id};
     
     if ($input->{command} =~ /(PASS)/) {
-        $self->{wheels}->{$id}->{lc $1} = $input->{params}->[0];
+        $info->{lc $1} = $input->{params}->[0];
     }
     elsif ($input->{command} =~ /(NICK|USER)/) {
-        $self->{wheels}->{$id}->{lc $1} = $input->{params}->[0];
-        $self->{wheels}->{$id}->{registered}++;
+        $info->{lc $1} = $input->{params}->[0];
+        $info->{$id}->{registered}++;
     }
     
-    if ($self->{wheels}->{$id}->{registered} == 2) {
-        my $info = $self->{wheels}->{$id};
+    if ($info->{registered} == 2) {
         AUTH: {
             last AUTH if !defined $info->{pass};
             $info->{pass} = md5_hex($info->{pass}, $CRYPT_SALT) if length $self->{config}->{password} == 32;

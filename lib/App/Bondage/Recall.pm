@@ -86,7 +86,7 @@ sub S_ctcp_action {
     my $sender = ${ $_[0] };
     my $recipients = ${ $_[1] };
     my $msg = ${ $_[2] };
-    return if $self->{clients};
+    return PCI_EAT_NONE if $self->{clients};
     
     for my $recipient (@{ $recipients }) {
         if ($recipient eq $irc->nick_name()) {

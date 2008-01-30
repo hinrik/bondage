@@ -72,9 +72,11 @@ sub _start {
                 mkdir $log_dir, oct 700 or die "Cannot create directory $log_dir $!; aborted";
             }
             $irc->plugin_add('Logger', POE::Component::IRC::Plugin::Logger->new(
-                                           Path => "$log_dir/$network_name",
-                                           Private => $network->{log_private},
-                                           Public => $network->{log_public}, ));
+                                           Path       => "$log_dir/$network_name",
+                                           Private    => $network->{log_private},
+                                           Public     => $network->{log_public},
+                                           SortByDate => $network->{log_rotate},
+            ));
         }
 
         $irc->plugin_add('Away',   App::Bondage::Away->new( Message => $network->{away_msg}));

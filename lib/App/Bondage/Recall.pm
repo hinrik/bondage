@@ -8,6 +8,8 @@ use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Component::IRC::Common qw( parse_user );
 use POE::Filter::IRCD;
 
+our $VERSION = '1.1';
+
 sub new {
     my ($package, %self) = @_;
     if (!$self{Mode} || $self{Mode} !~ /(missed|all|none)/) {

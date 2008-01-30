@@ -41,7 +41,6 @@ sub _start {
     
     while (my ($network_name, $network) = each %{ $self->{config}->{networks} }) {
         my $irc = $network->{irc} = POE::Component::IRC::State->spawn(
-            Alias     => $network_name,
             LocalAddr => $network->{bind_host},
             Server    => $network->{server_host},
             Port      => $network->{server_port},
@@ -110,22 +109,22 @@ sub _client_input {
     }
     
     if ($self->{wheels}->{$id}->{registered} == 2) {
+        my $info = $self->{wheels}->{$id};
         AUTH: {
-            my ($wheel, $pass, $network) = @{ $self->{wheels}->{$id} }{qw(wheel pass nick)};
-            last AUTH if !defined $pass;
-            $pass = md5_hex($pass, $CRYPT_SALT) if length $self->{config}->{password} == 32;
-            last AUTH unless $pass eq $self->{config}->{password};
-            last AUTH unless my $irc = $self->{ircs}->{$network};
+            last AUTH if !defined $info->{pass};
+            $info->{pass} = md5_hex($info->{pass}, $CRYPT_SALT) if length $self->{config}->{password} == 32;
+            last AUTH unless $info->{pass} eq $self->{config}->{password};
+            last AUTH unless my $irc = $self->{ircs}->{$info->{nick}};
             
-            $wheel->put($self->{wheels}->{$id}->{nick} . ' NICK :' . $irc->nick_name());
-            $irc->plugin_add("Client_$id" => App::Bondage::Client->new( Socket => $self->{wheels}->{$id}->{socket} ));
+            $info->{wheel}->put($info->{nick} . ' NICK :' . $irc->nick_name());
+            $irc->plugin_add("Client_$id" => App::Bondage::Client->new( Socket => $info->{socket} ));
             $irc->_send_event('irc_proxy_authed' => $id);
             delete $self->{wheels}->{$id};
             return;
         }
         
         # wrong password or nick (network), dump the client
-        $self->{wheels}->{$id}->{wheel}->put('ERROR :Closing Link: * [' . ( $self->{wheels}->{$id}->{user} || 'unknown' ) . '@' . $self->{wheels}->{$id}->{ip} . '] (Unauthorised connection)' );
+        $info->{wheel}->put('ERROR :Closing Link: * [' . ( $info->{user} || 'unknown' ) . '@' . $info->{ip} . '] (Unauthorised connection)' );
         delete $self->{wheels}->{$id};
     }
 }
@@ -420,13 +419,13 @@ Your IRC real name, or email, or whatever.
 
 (optional, no default)
 
-A list of all your channels, with an optional password after each colon.
+A list of all your channels, with the optional password after each colon.
 Every line must include a colon. E.g.:
 
  channels:
-   "chan1" :
+   "chan1" : ""
    "chan2" : "password"
-   "chan3" :
+   "chan3" : ""
 
 =item recall_mode
 

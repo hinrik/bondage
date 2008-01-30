@@ -41,6 +41,7 @@ sub _start {
     
     while (my ($network_name, $network) = each %{ $self->{config}->{networks} }) {
         my $irc = $network->{irc} = POE::Component::IRC::State->spawn(
+            Alias     => $network_name,
             LocalAddr => $network->{bind_host},
             Server    => $network->{server_host},
             Port      => $network->{server_port},
@@ -88,7 +89,8 @@ sub _start {
     }
     
     $self->_spawn_listener();
-    $poe_kernel->sig('HUP', '_sig_hup');
+    $poe_kernel->sig(HUP => '_sig_hup');
+    #$poe_kernel->sig(INT => '_sig_int');
 }
 
 sub _client_error {
@@ -97,7 +99,7 @@ sub _client_error {
 }
 
 sub _client_input {
-    my ($self, $input, $id) = @_[OBJECT, ARG0, ARG1];
+    my ($self, $kernel, $input, $id) = @_[OBJECT, KERNEL, ARG0, ARG1];
     
     if ($input->{command} =~ /(PASS)/) {
         $self->{wheels}->{$id}->{lc $1} = $input->{params}->[0];
@@ -109,14 +111,14 @@ sub _client_input {
     
     if ($self->{wheels}->{$id}->{registered} == 2) {
         AUTH: {
-            last AUTH if !defined $self->{wheels}->{$id}->{pass};
-            $self->{wheels}->{$id}->{pass} = md5_hex($self->{wheels}->{$id}->{pass}, $CRYPT_SALT) if length $self->{config}->{password} == 32;
-            last AUTH unless $self->{wheels}->{$id}->{pass} eq $self->{config}->{password};
-            my $irc = $self->{ircs}->{$self->{wheels}->{$id}->{nick}};
-            last AUTH unless $irc;
+            my ($wheel, $pass, $network) = @{ $self->{wheels}->{$id} }{qw(wheel pass nick)};
+            last AUTH if !defined $pass;
+            $pass = md5_hex($pass, $CRYPT_SALT) if length $self->{config}->{password} == 32;
+            last AUTH unless $pass eq $self->{config}->{password};
+            last AUTH unless my $irc = $self->{ircs}->{$network};
             
-            $self->{wheels}->{$id}->{wheel}->put($self->{wheels}->{$id}->{nick} . ' NICK :' . $irc->nick_name());
-            $irc->plugin_add("Client_$id", App::Bondage::Client->new( Socket => $self->{wheels}->{$id}->{socket} ));
+            $wheel->put($self->{wheels}->{$id}->{nick} . ' NICK :' . $irc->nick_name());
+            $irc->plugin_add("Client_$id" => App::Bondage::Client->new( Socket => $self->{wheels}->{$id}->{socket} ));
             $irc->_send_event('irc_proxy_authed' => $id);
             delete $self->{wheels}->{$id};
             return;
@@ -191,6 +193,16 @@ sub _sig_hup {
     
     $poe_kernel->sig_handled();
 }
+
+# die gracefully
+#sub _sig_int {
+#    my $self = shift;
+#    delete $self->{listener};
+#    for my $irc (values %{ $self->{ircs} }) {
+#        $irc->yield(shutdown => 'Killed by user');
+#    }
+#    $poe_kernel->sig_handled();
+#}
 
 1;
 

@@ -440,6 +440,7 @@ while you were away, regardless of this option.
 
 Set to true if you want Bondage to log all your public messages.
 They will be saved as C<~/.bondage/logs/some_network/#some_channel.log>
+unless you set log_rotate to true.
 
 =item log_private
 
@@ -447,6 +448,14 @@ They will be saved as C<~/.bondage/logs/some_network/#some_channel.log>
 
 Set to true if you want Bondage to log all private messages.
 They will be saved as C<~/.bondage/logs/some_network/some_nickname.log>
+unless you set log_rotate to true.
+
+=item log_rotate
+
+(optional, default: false)
+
+Set to true if you want Bondage to rotate your logs.
+E.g. a channel log file might look like C<~/.bondage/logs/some_network/#channel/2008-01-30.log>
 
 =item auto_cycle
 

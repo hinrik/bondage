@@ -406,7 +406,7 @@ Your IRC real name, or email, or whatever.
 
 (optional, no default)
 
-A list of all your channels, with an optionl password after each colon.
+A list of all your channels, with an optional password after each colon.
 Every line must include a colon. E.g.:
 
  channels:

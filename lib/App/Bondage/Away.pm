@@ -5,8 +5,6 @@ use warnings;
 use Carp;
 use POE::Component::IRC::Plugin qw( :ALL );
 
-our $VERSION = '1.0';
-
 sub new {
     my ($package, %self) = @_;
     return bless \%self, $package;
@@ -97,7 +95,7 @@ or a subclass thereof.
 
 One optional argument:
 
- 'Message', the away message you want to use. Defaults to 'No clients attached'
+'Message', the away message you want to use. Defaults to 'No clients attached'
 
 Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
 plugin_add() method.
@@ -106,7 +104,7 @@ plugin_add() method.
 
 One optional argument:
 
- An away message
+An away message
 
 Changes the away message when called with an argument, returns the current away message otherwise.
 

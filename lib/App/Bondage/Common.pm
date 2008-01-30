@@ -5,11 +5,10 @@ use warnings;
 
 require Exporter;
 our @ISA = qw( Exporter );
-our @EXPORT = qw( $APP_NAME $VERSION $HOMEPAGE $CRYPT_SALT );
+our @EXPORT = qw( $VERSION $HOMEPAGE $CRYPT_SALT );
 
-our $APP_NAME   = 'bondage';
-our $VERSION    = '0.2.1';
-our $HOMEPAGE   = 'http://bondage.googlecode.com';
+our $VERSION    = '0.2.2';
+our $HOMEPAGE   = 'http://search.cpan.org/dist/App-Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
 1;

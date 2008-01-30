@@ -5,7 +5,7 @@ WriteMakefile(
     NAME          => 'App::Bondage',
     AUTHOR        => 'Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>',
     VERSION_FROM  => 'lib/App/Bondage/Common.pm',
-    ABSTRACT      => 'A featureful easy-to-use IRC bouncer',
+    ABSTRACT_FROM => 'lib/App/Bondage.pm',
     LICENSE       => 'perl',
     EXE_FILES     => [ 'bin/bondage' ],
     PREREQ_PM     => {

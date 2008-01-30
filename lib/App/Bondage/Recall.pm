@@ -4,10 +4,9 @@ use strict;
 use warnings;
 use Carp;
 use POE::Component::IRC::Plugin qw( :ALL );
+use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Component::IRC::Common qw( parse_user );
 use POE::Filter::IRCD;
-
-our $VERSION = '1.0';
 
 sub new {
     my ($package, %self) = @_;
@@ -25,7 +24,7 @@ sub PCI_register {
     }
     
     if (!grep { $_->isa('POE::Component::IRC::Plugin::BotTraffic') } @{ $irc->pipeline->{PIPELINE} }) {
-        croak __PACKAGE__ . ' requires PoCo::IRC::Plugin::BotTraffic';
+        $irc->plugin_add('BotTraffic', POE::Component::IRC::Plugin::BotTraffic->new());
     }
     
     $self->{irc} = $irc;
@@ -289,7 +288,7 @@ some_nickname.log in the supplied path.
 
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
 or a subclass thereof. It also requires a L<POE::Component::IRC::Plugin::BotTraffic|POE::Component::IRC::Plugin::BotTraffic>
-to be in the plugin pipeline.
+to be in the plugin pipeline. It will be added automatically if it is not present.
 
 =head1 METHODS
 
@@ -299,10 +298,10 @@ to be in the plugin pipeline.
 
 One optional argument:
 
- 'Mode', which public messages you want it to recall. 'missed', the default, makes it only recall
- public messages that were received while no proxy client was attached. 'all' will recall
- public messages from all channels since they were joined. 'none' will recall none. The plugin
- will always recall missed private messages, regardless of this option.
+'Mode', which public messages you want it to recall. 'missed', the default, makes it only recall
+public messages that were received while no proxy client was attached. 'all' will recall
+public messages from all channels since they were joined. 'none' will recall none. The plugin
+will always recall missed private messages, regardless of this option.
 
 Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
 plugin_add() method.

@@ -6,8 +6,6 @@ use Carp;
 use POE::Component::IRC::Plugin qw( :ALL );
 use POE::Component::IRC::Common qw( parse_user );
 
-our $VERSION = '1.0';
-
 sub new {
     my ($package, %self) = @_;
     return bless \%self, $package;
@@ -55,7 +53,7 @@ sub S_part {
 sub S_quit {
     my ($self, $irc) = splice @_, 0, 2;
     my $quitter = parse_user(${ $_[0] });
-    my $channels = ${ $_[2] };
+    my $channels = @{ $_[2] }[0];
     if ($quitter ne $irc->nick_name()) {
         for my $chan (@{ $channels }) {
             $self->_cycle($chan);
@@ -114,7 +112,8 @@ plugin_add() method.
 =item cycling
 
 One argument:
- A channel name
+
+A channel name
 
 Returns 1 if the plugin is currently cycling that channel, 0 otherwise.
 

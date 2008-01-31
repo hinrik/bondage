@@ -40,7 +40,7 @@ sub _start {
     $self->{resolver} = POE::Component::Client::DNS->spawn();
     
     while (my ($network_name, $network) = each %{ $self->{config}->{networks} }) {
-        my $irc = $network->{irc} = POE::Component::IRC::State->spawn(
+        my $irc = $self->{ircs}->{$network_name} = POE::Component::IRC::State->spawn(
             LocalAddr => $network->{bind_host},
             Server    => $network->{server_host},
             Port      => $network->{server_port},
@@ -54,7 +54,6 @@ sub _start {
             Debug     => $self->{Debug},
             Raw       => 1,
         );
-        $self->{ircs}->{$network_name} = $irc;
         
         $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new( Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE" ));
         $irc->plugin_add('NickReclaim', POE::Component::IRC::Plugin::NickReclaim->new());
@@ -98,7 +97,7 @@ sub _client_error {
 }
 
 sub _client_input {
-    my ($self, $kernel, $input, $id) = @_[OBJECT, KERNEL, ARG0, ARG1];
+    my ($self, $input, $id) = @_[OBJECT, ARG0, ARG1];
     my $info = $self->{wheels}->{$id};
     
     if ($input->{command} =~ /(PASS)/) {
@@ -106,7 +105,7 @@ sub _client_input {
     }
     elsif ($input->{command} =~ /(NICK|USER)/) {
         $info->{lc $1} = $input->{params}->[0];
-        $info->{$id}->{registered}++;
+        $info->{registered}++;
     }
     
     if ($info->{registered} == 2) {
@@ -114,8 +113,7 @@ sub _client_input {
             last AUTH if !defined $info->{pass};
             $info->{pass} = md5_hex($info->{pass}, $CRYPT_SALT) if length $self->{config}->{password} == 32;
             last AUTH unless $info->{pass} eq $self->{config}->{password};
-            last AUTH unless my $irc = $self->{ircs}->{$info->{nick}};
-            
+            last AUTH unless my $irc = $self->{ircs}->{ $info->{nick} };
             $info->{wheel}->put($info->{nick} . ' NICK :' . $irc->nick_name());
             $irc->plugin_add("Client_$id" => App::Bondage::Client->new( Socket => $info->{socket} ));
             $irc->_send_event('irc_proxy_authed' => $id);

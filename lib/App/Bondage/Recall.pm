@@ -180,7 +180,7 @@ sub S_raw {
         }
         elsif ($input->{command} =~ /(332|333)/) {
             # only log topic stuff if we were just joining the channel
-            push @{ $self->{recall} }, $raw_line if !$irc->channel_list($input->{params}->{0});
+            push @{ $self->{recall} }, $raw_line if !$irc->channel_list($input->{params}->[0]);
         }
     }
         

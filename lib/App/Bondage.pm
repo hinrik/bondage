@@ -61,9 +61,9 @@ sub _start {
         $irc->plugin_add('AutoJoin',    POE::Component::IRC::Plugin::AutoJoin->new(
                                             Channels => $network->{channels},
                                             RejoinOnKick => $network->{kick_rejoin} ));
-        if (exists $network->{nickserv_pass}) {
+        if (defined $network->{nickserv_pass}) {
             $irc->plugin_add('NickServID', POE::Component::IRC::Plugin::NickServID->new(
-                                               Password => $network->{nickserv_pass}, ));
+                                            Password => $network->{nickserv_pass}, ));
         }
         if ($network->{log_public} || $network->{log_private}) {
             my $log_dir = $self->{Work_dir} . '/logs';
@@ -228,7 +228,7 @@ the code short and (hopefully) well tested by others.
 
 I wrote Bondage because no other IRC bouncer out there fit my needs.
 Either they were missing essential features, or they were implemented
-in an undesirable (if not buggy) way. I've tried to make B<bondage>
+in an undesirable (if not buggy) way. I've tried to make Bondage
 stay out of your way and be as transparent as possible.
 It's supposed to be a proxy, after all.
 
@@ -417,8 +417,7 @@ Your IRC real name, or email, or whatever.
 
 (optional, no default)
 
-A list of all your channels, with the optional password after each colon.
-Every line must include a colon. E.g.:
+A list of all your channels and their passwords, separated by a colon:
 
  channels:
    "chan1" : ""
@@ -498,7 +497,7 @@ The following CPAN distributions are required:
 =head1 BUGS
 
 Report all bugs, feature requests, etc, here:
-http://code.google.com/p/bondage/issues
+http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
 
 =head1 AUTHOR
 

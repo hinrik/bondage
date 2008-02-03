@@ -155,7 +155,7 @@ plugin_add() method.
 
 One argument:
 
- An IRC protocol line
+An IRC protocol line
 
 Sends an IRC protocol line to the client
 

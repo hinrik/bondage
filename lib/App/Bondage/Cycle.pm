@@ -69,8 +69,10 @@ sub _cycle {
     if ($irc->channel_list($chan) == 1) {
         if (!$irc->is_channel_operator($chan, $irc->nick_name)) {
             $self->{cycling}->{$chan} = 1;
+            my $topic = $irc->channel_topic($chan);
             $irc->yield(part => $chan);
             $irc->yield(join => $chan => $irc->channel_key($chan));
+            $irc->yield(topic => $chan => $topic->{Value}) if defined $topic->{Value};
         }
     }
 }
@@ -98,6 +100,7 @@ channels if they become empty and opless, in order to gain ops.
 App::Bondage::Cycle is a L<POE::Component::IRC|POE::Component::IRC> plugin.
 When someone quits, gets kicked, or parts a channel, the plugin will cycle the channel
 if the IRC component is alone on that channel and is not a channel operator.
+If there was a topic set on the channel, it will be restored afterwards.
 
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
 or a subclass thereof.

@@ -74,7 +74,8 @@ sub _start {
                                            Path       => "$log_dir/$network_name",
                                            Private    => $network->{log_private},
                                            Public     => $network->{log_public},
-                                           SortByDate => $network->{log_rotate},
+                                           SortByDate => $network->{log_sortbydate},
+                                           Restricted => $network->{log_restricted},
             ));
         }
 
@@ -448,7 +449,7 @@ while you were away, regardless of this option.
 
 Set to true if you want Bondage to log all your public messages.
 They will be saved as C<~/.bondage/logs/some_network/#some_channel.log>
-unless you set log_rotate to true.
+unless you set log_sortbydate to true.
 
 =item log_private
 
@@ -456,14 +457,21 @@ unless you set log_rotate to true.
 
 Set to true if you want Bondage to log all private messages.
 They will be saved as C<~/.bondage/logs/some_network/some_nickname.log>
-unless you set log_rotate to true.
+unless you set log_sortbydate to true.
 
-=item log_rotate
+=item log_sortbydate
 
 (optional, default: false)
 
 Set to true if you want Bondage to rotate your logs.
 E.g. a channel log file might look like C<~/.bondage/logs/some_network/#channel/2008-01-30.log>
+
+=item log_restricted
+
+(optional, default: false)
+
+Set this to true if you want Bondage to restrict the read permissions
+on created log files/directories so other users won't be able to access them.
 
 =item auto_cycle
 

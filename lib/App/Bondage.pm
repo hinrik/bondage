@@ -2,6 +2,7 @@ package App::Bondage;
 
 use strict;
 use warnings;
+use Carp;
 use Config;
 use App::Bondage::Away;
 use App::Bondage::Client;
@@ -68,7 +69,7 @@ sub _start {
         if ($network->{log_public} || $network->{log_private}) {
             my $log_dir = $self->{Work_dir} . '/logs';
             if (! -d $log_dir) {
-                mkdir $log_dir, oct 700 or die "Cannot create directory $log_dir $!; aborted";
+                mkdir $log_dir, oct 700 or croak "Cannot create directory $log_dir $!; aborted";
             }
             $irc->plugin_add('Logger', POE::Component::IRC::Plugin::Logger->new(
                                            Path       => "$log_dir/$network_name",
@@ -146,8 +147,8 @@ sub _listener_accept {
 }
 
 sub _listener_failed {
-    my ($self, $wheel) = @_[OBJECT, ARG3];
-    $self->_spawn_listener();
+    my ($self, $error, $wheel) = @_[OBJECT, ARG2, ARG3];
+    croak "Failed to spawn listener: $error; aborted";
 }
 
 sub _spawn_listener {
@@ -158,15 +159,15 @@ sub _spawn_listener {
         SuccessEvent => '_listener_accept',
         FailureEvent => '_listener_failed',
         Reuse        => 'yes',
-    ) or die "Failed to spawn listener: $!; aborted";
+    );
     
     if ($self->{config}->{listen_ssl}) {
         require POE::Component::SSLify;
         POE::Component::SSLify->import(qw(Server_SSLify SSLify_Options));
         eval { SSLify_Options("bondage.key", "bondage.crt") };
-        die 'Unable to load SSL key (' . $self->{Work_dir} . '/bondage.key) or certificate (' . $self->{Work_dir} . "/bondage.crt): $!; aborted" if $!;
+        croak 'Unable to load SSL key (' . $self->{Work_dir} . '/bondage.key) or certificate (' . $self->{Work_dir} . "/bondage.crt): $!; aborted" if $!;
         eval { $self->{listener} = Server_SSLify($self->{listener}) };
-        die "Unable to SSLify the listener: $!; aborted" if $!;
+        croak "Unable to SSLify the listener: $!; aborted" if $!;
     }
 }
 
@@ -176,7 +177,7 @@ sub _load_config {
     $self->{config} = LoadFile($self->{Work_dir} . '/config.yml');
     for my $opt (qw(listen_port password)) {
         if (!defined $self->{config}->{$opt}) {
-            die "Config option '$opt' must be defined; aborted";
+            croak "Config option '$opt' must be defined; aborted";
         }
     }
 }

@@ -9,9 +9,9 @@ networks:
 #    realname: "ircreal"
 
 #    channels:
-#      "#chan1" :
+#      "#chan1" : ""
 #      "#chan2" : "mypassword"
-#      "#chan3" :
+#      "#chan3" : ""
 
   ircnet:
     server_host: "us.ircnet.org"
@@ -20,5 +20,5 @@ networks:
 #    realname: "ircreal"
     
 #    channels:
-#      "#chan1" :
+#      "#chan1" : ""
 

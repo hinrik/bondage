@@ -6,7 +6,7 @@ use Carp;
 use POE::Component::IRC::Plugin qw( :ALL );
 use POE::Component::IRC::Common qw( parse_user );
 
-our $VERSION = '1.1';
+our $VERSION = '1.2';
 
 sub new {
     my ($package, %self) = @_;
@@ -21,6 +21,7 @@ sub PCI_register {
     }
     
     $self->{cycling} = { };
+    $self->{irc} = $irc;
     $irc->plugin_register($self, 'SERVER', qw(join kick part quit));
     return 1;
 }
@@ -40,7 +41,7 @@ sub S_kick {
     my ($self, $irc) = splice @_, 0, 2;
     my $chan = ${ $_[1] };
     my $victim = ${ $_[2] };
-    _cycle($chan) if $victim ne $irc->nick_name();
+    $self->_cycle($chan) if $victim ne $irc->nick_name();
     return PCI_EAT_NONE;
 }
 
@@ -48,7 +49,7 @@ sub S_part {
     my ($self, $irc) = splice @_, 0, 2;
     my $parter = parse_user(${ $_[0] });
     my $chan = ${ $_[1] };
-    _cycle($chan) if $parter ne $irc->nick_name();
+    $self->_cycle($chan) if $parter ne $irc->nick_name();
     return PCI_EAT_NONE;
 }
 
@@ -65,7 +66,8 @@ sub S_quit {
 }
 
 sub _cycle {
-    my ($self, $irc, $chan) = @_;
+    my ($self, $chan) = @_;
+    my $irc = $self->{irc};
     if ($irc->channel_list($chan) == 1) {
         if (!$irc->is_channel_operator($chan, $irc->nick_name)) {
             $self->{cycling}->{$chan} = 1;

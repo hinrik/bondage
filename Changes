@@ -6,7 +6,7 @@
 
 0.2.2 Wed Jan 30 04:18:26 GMT 2008
     - Reorganized pod
-		- Fixed Cycle.pm
+    - Fixed Cycle.pm
 
 0.2.1 Mon Jan 28 10:14:17 GMT 2008
     - Pod fixes

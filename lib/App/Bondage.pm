@@ -6,7 +6,6 @@ use Carp;
 use Config;
 use App::Bondage::Away;
 use App::Bondage::Client;
-use App::Bondage::Cycle;
 use App::Bondage::Recall;
 use Digest::MD5 qw(md5_hex);
 use POE qw(Filter::Line Filter::Stackable Wheel::ReadWrite Wheel::SocketFactory);
@@ -16,6 +15,7 @@ use POE::Component::IRC::State;
 use POE::Component::IRC::Plugin::AutoJoin;
 use POE::Component::IRC::Plugin::Connector;
 use POE::Component::IRC::Plugin::CTCP;
+use POE::Component::IRC::Plugin::CycleEmpty;
 use POE::Component::IRC::Plugin::Logger;
 use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
@@ -60,6 +60,7 @@ sub _start {
         );
         
         $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new( Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE" ));
+        $irc->plugin_add('Cycle',       POE::Component::IRC::Plugin::CycleEmpty->new()) if $network->{auto_cycle};
         $irc->plugin_add('NickReclaim', POE::Component::IRC::Plugin::NickReclaim->new());
         $irc->plugin_add('Connector',   POE::Component::IRC::Plugin::Connector->new( Delay => 120 ));
         $irc->plugin_add('AutoJoin',    POE::Component::IRC::Plugin::AutoJoin->new(
@@ -75,16 +76,15 @@ sub _start {
                 mkdir $log_dir, oct 700 or croak "Cannot create directory $log_dir $!; aborted";
             }
             $irc->plugin_add('Logger', POE::Component::IRC::Plugin::Logger->new(
-                                           Path       => "$log_dir/$network_name",
-                                           Private    => $network->{log_private},
-                                           Public     => $network->{log_public},
-                                           SortByDate => $network->{log_sortbydate},
-                                           Restricted => $network->{log_restricted},
+                                           Path         => "$log_dir/$network_name",
+                                           Private      => $network->{log_private},
+                                           Public       => $network->{log_public},
+                                           Sort_by_date => $network->{log_sortbydate},
+                                           Restricted   => $network->{log_restricted},
             ));
         }
 
         $irc->plugin_add('Away',   App::Bondage::Away->new( Message => $network->{away_msg}));
-        $irc->plugin_add('Cycle',  App::Bondage::Cycle->new()) if $network->{auto_cycle};
         $irc->plugin_add('Recall', App::Bondage::Recall->new( Mode => $network->{recall_mode} ));
 
         $irc->yield(register => 'all');

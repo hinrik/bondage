@@ -21,7 +21,7 @@ use POE::Component::IRC::Plugin::Logger;
 use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
-use YAML::Syck qw(LoadFile);
+use Config::Any;
 
 sub new {
     my ($package, %params) = @_;
@@ -173,8 +173,13 @@ sub _spawn_listener {
 
 sub _load_config {
     my $self = shift;
-    $YAML::Syck::ImplicitTyping = 1;
-    $self->{config} = LoadFile($self->{Work_dir} . '/config.yml');
+
+    my $cfg = Config::Any->load_files( {
+        use_ext => 1,
+        files   => [ glob($self->{Work_dir} . '/config.*') ],
+    } );
+    $self->{config} = ((values %{$CONF->[0]})[0]);
+
     for my $opt (qw(listen_port password)) {
         if (!defined $self->{config}->{$opt}) {
             croak "Config option '$opt' must be defined; aborted";

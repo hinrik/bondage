@@ -13,6 +13,6 @@ WriteMakefile(
         'POE::Component::Daemon'      => '0',
         'POE::Component::IRC'         => '5.58',
         'POE::Filter::IRCD'           => '2.34',
-        'YAML::Syck'                  => '0',
+        'Config::Any'                 => '0.11',
     }
 );

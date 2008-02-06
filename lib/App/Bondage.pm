@@ -506,7 +506,7 @@ The following CPAN distributions are required:
  POE-Component-SSLify (only if you need SSL support)
  POE-Filter-IRCD
  Socket6 (only if you need ipv6 support)
- YAML-Syck
+ Config::Any
 
 =head1 BUGS
 

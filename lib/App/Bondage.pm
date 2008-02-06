@@ -318,10 +318,9 @@ Bondage will reply to CTCP VERSION requests when you are offline.
 
 =head1 CONFIGURATION
 
-The following options are recognized in the configuration file
-which should (by default) be C<~/.bondage/config.yml>
-
-B<Note>: You may not use tabs for indentation.
+The following options are recognized in the configuration file which
+can be called F<~/.bondage/config.EXT> where EXT is an extension
+L<Config::Any> recognizes.
 
 =over
 

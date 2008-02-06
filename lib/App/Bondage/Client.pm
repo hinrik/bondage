@@ -165,3 +165,4 @@ Sends an IRC protocol line to the client
 
 Hinrik E<Ouml>rn SigurE<eth>sson, hinrik.sig@gmail.com
 
+=cut

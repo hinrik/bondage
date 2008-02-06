@@ -130,3 +130,4 @@ Returns 1 if the plugin is currently cycling that channel, 0 otherwise.
 
 Hinrik E<Ouml>rn SigurE<eth>sson, hinrik.sig@gmail.com
 
+=cut

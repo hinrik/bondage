@@ -116,4 +116,4 @@ Changes the away message when called with an argument, returns the current away 
 
 Hinrik E<Ouml>rn SigurE<eth>sson, hinrik.sig@gmail.com
 
-
+=cut

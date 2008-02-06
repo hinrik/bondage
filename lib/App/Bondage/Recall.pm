@@ -317,3 +317,4 @@ plugin_add() method.
 
 Hinrik E<Ouml>rn SigurE<eth>sson, hinrik.sig@gmail.com
 
+=cut

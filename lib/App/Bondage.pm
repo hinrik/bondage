@@ -535,3 +535,4 @@ Other useful IRC bouncers:
  http://irssi.org/documentation/proxy
  http://bip.t1r.net
 
+=cut

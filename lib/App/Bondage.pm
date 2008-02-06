@@ -178,7 +178,7 @@ sub _load_config {
         use_ext => 1,
         files   => [ glob($self->{Work_dir} . '/config.*') ],
     } );
-    $self->{config} = ((values %{$CONF->[0]})[0]);
+    $self->{config} = ((values %{$cfg->[0]})[0]);
 
     for my $opt (qw(listen_port password)) {
         if (!defined $self->{config}->{$opt}) {

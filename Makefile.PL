@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME          => 'App::Bondage',
     AUTHOR        => 'Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>',
-    VERSION_FROM  => 'lib/App/Bondage/Common.pm',
+    VERSION_FROM  => 'lib/App/Bondage.pm',
     ABSTRACT_FROM => 'lib/App/Bondage.pm',
     LICENSE       => 'perl',
     EXE_FILES     => [ 'bin/bondage' ],

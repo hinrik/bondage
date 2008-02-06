@@ -6,7 +6,6 @@ use Carp;
 use Config;
 use App::Bondage::Away;
 use App::Bondage::Client;
-use App::Bondage::Common;
 use App::Bondage::Cycle;
 use App::Bondage::Recall;
 use Digest::MD5 qw(md5_hex);
@@ -22,6 +21,10 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 use Config::Any;
+
+our $VERSION    = '0.2.4';
+our $HOMEPAGE   = 'http://search.cpan.org/dist/App-Bondage';
+our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
 sub new {
     my ($package, %params) = @_;

@@ -3,7 +3,6 @@
 use strict;
 use warnings;
 use App::Bondage;
-use App::Bondage::Common;
 use Digest::MD5 qw(md5_hex);
 use Getopt::Long qw(:config auto_help);
 use Pod::Usage;
@@ -16,7 +15,7 @@ my $debug = 0;
 GetOptions(
     'c|crypt'     => \&encrypt_pass,
     'd|debug'     => \$debug,
-    'v|version'   => sub { print "Bondage $VERSION, $HOMEPAGE\n"; exit },
+    'v|version'   => sub { print "Bondage $App::Bondage::VERSION, $App::Bondage::HOMEPAGE\n"; exit },
     'w|workdir=s' => \$work_dir,
 ) or pod2usage();
 
@@ -29,7 +28,7 @@ sub encrypt_pass {
     system('stty -echo');
     chomp (my $password = <STDIN>);
     system('stty echo');
-    print "\nEncrypted password: " . md5_hex($password, $CRYPT_SALT) . "\n";
+    print "\nEncrypted password: " . md5_hex($password, $App::Bondage::CRYPT_SALT) . "\n";
     exit;
 }
 

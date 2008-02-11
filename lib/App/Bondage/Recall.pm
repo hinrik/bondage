@@ -8,7 +8,7 @@ use POE::Component::IRC::Common qw( parse_user );
 use POE::Component::IRC::Plugin qw( :ALL );
 use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Filter::IRCD;
-#use Tie::File;
+use Tie::File;
 
 our $VERSION = '1.2';
 
@@ -35,7 +35,7 @@ sub PCI_register {
     $self->{filter} = POE::Filter::IRCD->new();
     $self->{clients} = 0;
     $self->{recall} = [ ];
-    #tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /(all|missed)/;
+    tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /(all|missed)/;
     $irc->raw_events(1);
   
     $irc->plugin_register($self, 'SERVER', qw(bot_ctcp_action bot_public connected ctcp_action msg part proxy_authed proxy_close raw));

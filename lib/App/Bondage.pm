@@ -60,7 +60,7 @@ sub _start {
         );
         
         $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new( Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE" ));
-        $irc->plugin_add('Cycle',       POE::Component::IRC::Plugin::CycleEmpty->new()) if $network->{auto_cycle};
+        $irc->plugin_add('Cycle',       POE::Component::IRC::Plugin::CycleEmpty->new()) if $network->{cycle_empty};
         $irc->plugin_add('NickReclaim', POE::Component::IRC::Plugin::NickReclaim->new());
         $irc->plugin_add('Connector',   POE::Component::IRC::Plugin::Connector->new( Delay => 120 ));
         $irc->plugin_add('AutoJoin',    POE::Component::IRC::Plugin::AutoJoin->new(
@@ -220,7 +220,7 @@ sub _exit {
 
 =head1 NAME
 
-App::Bondage - A featureful easy-to-use IRC bouncer
+App::Bondage - A featureful IRC bouncer based on POE::Component::IRC
 
 =head1 SYNOPSIS
 
@@ -328,7 +328,7 @@ Bondage will reply to CTCP VERSION requests when you are offline.
 
 The following options are recognized in the configuration file which
 can be called F<~/.bondage/config.EXT> where EXT is an extension
-L<Config::Any> recognizes.
+recognized by L<Config::Any|Config::Any>.
 
 =over
 
@@ -431,7 +431,8 @@ Your IRC real name, or email, or whatever.
 
 (optional, no default)
 
-A list of all your channels and their passwords, separated by a colon:
+A list of all your channels and their passwords.
+Here's an example in L<YAML|YAML> format:
 
  channels:
    "chan1" : ""
@@ -486,7 +487,7 @@ E.g. a channel log file might look like C<~/.bondage/logs/some_network/#channel/
 Set this to true if you want Bondage to restrict the read permissions
 on created log files/directories so other users won't be able to access them.
 
-=item auto_cycle
+=item cycle_empty
 
 (optional, default: false)
 
@@ -506,6 +507,7 @@ if you get kicked from it.
 
 The following CPAN distributions are required:
 
+ Config-Any
  POE
  POE-Component-Client-DNS
  POE-Component-Daemon
@@ -513,12 +515,20 @@ The following CPAN distributions are required:
  POE-Component-SSLify (only if you need SSL support)
  POE-Filter-IRCD
  Socket6 (only if you need ipv6 support)
- Config::Any
 
 =head1 BUGS
 
 Report all bugs, feature requests, etc, here:
 http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
+
+=head1 TODO
+
+DCC support.
+
+Answer common client requests like WHO/MODE without asking the server,
+so other clients won't be bothered with unnecessary traffic.
+
+Reload the configuration file upon being sent a SIGHUP and do something useful.
 
 =head1 AUTHOR
 

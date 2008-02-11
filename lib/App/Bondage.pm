@@ -205,13 +205,15 @@ sub _reload {
 # die gracefully
 sub _exit {
     my $self = shift;
-    delete $self->{listener};
-    $self->{resolver}->shutdown() if $self->{resolver};
-    delete $self->{resolver};
-    while (my ($network, $irc) = each %{ $self->{ircs} }) {
-        $irc->yield(shutdown => 'Killed by user');
-        $irc->yield(unregister => 'all');
-        delete $self->{ircs}->{network};
+    if (defined $self->{resolver}) {
+        delete $self->{listener};
+        $self->{resolver}->shutdown();
+        delete $self->{resolver};
+        while (my ($network, $irc) = each %{ $self->{ircs} }) {
+            $irc->yield(shutdown => 'Killed by user');
+            $irc->yield(unregister => 'all');
+            delete $self->{ircs}->{network};
+        }
     }
     $poe_kernel->sig_handled();
 }
@@ -522,6 +524,8 @@ Report all bugs, feature requests, etc, here:
 http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
 
 =head1 TODO
+
+Exit cleanly when clients are attached.
 
 DCC support.
 

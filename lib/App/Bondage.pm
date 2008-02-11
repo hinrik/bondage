@@ -32,7 +32,7 @@ sub new {
     $self->_load_config();
     POE::Session->create(
         object_states => [
-            $self => [ qw(_start _client_error _client_input _listener_accept _listener_failed _sig_hup) ],
+            $self => [ qw(_start _client_error _client_input _listener_accept _listener_failed _reload _exit) ],
         ],
     );
     return $self;
@@ -92,8 +92,9 @@ sub _start {
     }
     
     $self->_spawn_listener();
-    $poe_kernel->sig(HUP => '_sig_hup');
-    #$poe_kernel->sig(INT => '_sig_int');
+    $poe_kernel->sig(HUP => '_reload');
+    $poe_kernel->sig(INT => '_exit');
+    $poe_kernel->sig(TERM => '_exit');
 }
 
 sub _client_error {
@@ -191,7 +192,7 @@ sub _load_config {
 }
 
 # reload the config file
-sub _sig_hup {
+sub _reload {
     my $self = shift;
     my $old_config = $self->{config};
     $self->_load_config();
@@ -202,14 +203,18 @@ sub _sig_hup {
 }
 
 # die gracefully
-#sub _sig_int {
-#    my $self = shift;
-#    delete $self->{listener};
-#    for my $irc (values %{ $self->{ircs} }) {
-#        $irc->yield(shutdown => 'Killed by user');
-#    }
-#    $poe_kernel->sig_handled();
-#}
+sub _exit {
+    my $self = shift;
+    delete $self->{listener};
+    $self->{resolver}->shutdown() if $self->{resolver};
+    delete $self->{resolver};
+    while (my ($network, $irc) = each %{ $self->{ircs} }) {
+        $irc->yield(shutdown => 'Killed by user');
+        $irc->yield(unregister => 'all');
+        delete $self->{ircs}->{network};
+    }
+    $poe_kernel->sig_handled();
+}
 
 1;
 

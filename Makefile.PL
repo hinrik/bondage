@@ -11,7 +11,7 @@ WriteMakefile(
     PREREQ_PM     => {
         'POE::Component::Client::DNS' => '0.99',
         'POE::Component::Daemon'      => '0',
-        'POE::Component::IRC'         => '5.58',
+        'POE::Component::IRC'         => '5.62',
         'POE::Filter::IRCD'           => '2.34',
         'Config::Any'                 => '0.11',
     }

@@ -42,6 +42,8 @@ sub PCI_register {
 }
 
 sub PCI_unregister {
+    my ($self, $irc) = @_;
+    #$self->_close_wheel();
     return 1;
 }
 

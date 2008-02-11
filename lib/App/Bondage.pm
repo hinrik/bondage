@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Carp;
 use Config;
+use Config::Any;
 use App::Bondage::Away;
 use App::Bondage::Client;
 use App::Bondage::Recall;
@@ -20,7 +21,6 @@ use POE::Component::IRC::Plugin::Logger;
 use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
-use Config::Any;
 
 our $VERSION    = '0.2.4';
 our $HOMEPAGE   = 'http://search.cpan.org/dist/App-Bondage';

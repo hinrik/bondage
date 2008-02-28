@@ -57,6 +57,7 @@ sub _start {
             Resolver  => $self->{resolver},
             Debug     => $self->{Debug},
             Raw       => 1,
+            AwayPoll  => 0,
         );
         
         $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new( Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE" ));
@@ -88,7 +89,7 @@ sub _start {
         $irc->plugin_add('Recall', App::Bondage::Recall->new( Mode => $network->{recall_mode} ));
 
         $irc->yield(register => 'all');
-        $irc->yield('connect');
+        $irc->yield(connect => { });
     }
     
     $self->_spawn_listener();

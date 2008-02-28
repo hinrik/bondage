@@ -1,3 +1,5 @@
+use strict;
+use warnings;
 use Test::More tests => 4;
 use_ok 'App::Bondage';
 use_ok 'App::Bondage::Away';

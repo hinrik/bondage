@@ -279,6 +279,7 @@ sub recall {
 }
 
 1;
+__END__
 
 =head1 NAME
 
@@ -294,28 +295,29 @@ with the messages they missed while they were away, among other things.
 =head1 DESCRIPTION
 
 App::Bondage::Recall is a L<POE::Component::IRC|POE::Component::IRC> plugin.
-It uses on Log::Log4perl to log messages and CTCP ACTIONs to either #some_channel.log or
-some_nickname.log in the supplied path.
+It uses on Log::Log4perl to log messages and CTCP ACTIONs to either
+F<#some_channel.log> or F<some_nickname.log> in the supplied path.
 
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
 or a subclass thereof. It also requires a L<POE::Component::IRC::Plugin::BotTraffic|POE::Component::IRC::Plugin::BotTraffic>
 to be in the plugin pipeline. It will be added automatically if it is not present.
 
-=head1 METHODS
+=head1 CONSTRUCTOR
 
 =over
 
-=item new
+=item C<new>
 
 One optional argument:
 
-'Mode', which public messages you want it to recall. 'missed', the default, makes it only recall
-public messages that were received while no proxy client was attached. 'all' will recall
-public messages from all channels since they were joined. 'none' will recall none. The plugin
-will always recall missed private messages, regardless of this option.
+'Mode', which public messages you want it to recall. 'missed', the default,
+makes it only recall public messages that were received while no proxy client
+was attached. 'all' will recall public messages from all channels since they
+were joined. 'none' will recall none. The plugin will always recall missed
+private messages, regardless of this option.
 
 Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
-plugin_add() method.
+C<plugin_add()> method.
 
 =back
 

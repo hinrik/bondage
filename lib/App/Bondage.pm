@@ -93,9 +93,10 @@ sub _start {
     }
     
     $self->_spawn_listener();
-    $poe_kernel->sig(HUP => '_reload');
-    $poe_kernel->sig(INT => '_exit');
+    $poe_kernel->sig(HUP  => '_reload');
+    $poe_kernel->sig(INT  => '_exit');
     $poe_kernel->sig(TERM => '_exit');
+    $poe_kernel->sig(DIE  => '_exit');
 }
 
 sub _client_error {
@@ -220,6 +221,7 @@ sub _exit {
 }
 
 1;
+__END__
 
 =head1 NAME
 
@@ -506,6 +508,21 @@ if you get kicked from it.
 
 =back
 
+=head1 CONSTRUCTOR
+
+=over
+
+=item C<new>
+
+Arguments:
+
+'Work_dir', the working directory for the bouncer. Should include the config
+file. This option is required.
+
+'Debug', set to 1 to enable debugging. Default is 0.
+
+=back
+
 =head1 DEPENDENCIES
 
 The following CPAN distributions are required:
@@ -528,7 +545,7 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
 
 Exit cleanly when clients are attached.
 
-DCC support.
+DCC send support.
 
 Answer common client requests like WHO/MODE without asking the server,
 so other clients won't be bothered with unnecessary traffic.

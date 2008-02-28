@@ -119,6 +119,7 @@ sub put {
 }
 
 1;
+__END__
 
 =head1 NAME
 
@@ -139,20 +140,26 @@ It handles a input/output and disconnects from a proxy client.
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
 or a subclass thereof.
 
+=head1 CONSTRUCTOR
+
+=over
+
+=item C<new>
+
+One argument:
+
+'Socket', the socket of the proxy client.
+
+Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
+C<plugin_add()> method.
+
+=back
+
 =head1 METHODS
 
 =over
 
-=item new
-
-One argument:
-
- 'Socket', the socket of the proxy client.
-
-Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
-plugin_add() method.
-
-=item put
+=item C<put>
 
 One argument:
 

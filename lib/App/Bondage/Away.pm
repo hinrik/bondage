@@ -68,12 +68,13 @@ sub message {
 }
 
 1;
+__END__
 
 =head1 NAME
 
 App::Bondage::Away - A PoCo-IRC plugin which changes the away status
 based on the presence of proxy clients, by listening for
-'irc_proxy_authed' and 'irc_proxy_close' events.
+C<irc_proxy_authed> and C<irc_proxy_close> events.
 
 =head1 SYNOPSIS
 
@@ -89,18 +90,24 @@ When the last proxy client detaches, it changes the status to away, with the sup
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
 or a subclass thereof.
 
-=head1 METHODS
+=head1 CONSTRUCTOR
 
 =over
 
-=item new
+=item C<new>
 
 One optional argument:
 
 'Message', the away message you want to use. Defaults to 'No clients attached'
 
 Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
-plugin_add() method.
+C<plugin_add()> method.
+
+=back
+
+=head1 METHODS
+
+=over
 
 =item message
 

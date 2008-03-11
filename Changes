@@ -1,10 +1,16 @@
+0.2.5
+    - Fix PM recalling
+    - Enable plugin_debug in PoCo::IRC when debugging
+    - A few pod fixes
+    - Fix MANIFEST
+
 0.2.4
     - Fix topic recalling
-		- Add log_rotate/log_sortbydate
-		- Move channel cycling to POE::Component::IRC
-		- Use Config::Any instead of YAML::Syck
-		- Exit (almost) cleanly when sent TERM/INT signals
-		- Rename auto_cycle option to cycle_empty
+    - Add log_rotate/log_sortbydate
+    - Move channel cycling to POE::Component::IRC
+    - Use Config::Any instead of YAML::Syck
+    - Exit (almost) cleanly when sent TERM/INT signals
+    - Rename auto_cycle option to cycle_empty
 
 0.2.3 Wed Jan 30 05:01:30 GMT 2008
     - Fix silly versioning blunder

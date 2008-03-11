@@ -22,7 +22,7 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 
-our $VERSION    = '0.2.4';
+our $VERSION    = '0.2.5';
 our $HOMEPAGE   = 'http://search.cpan.org/dist/App-Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
@@ -32,7 +32,7 @@ sub new {
     $self->_load_config();
     POE::Session->create(
         object_states => [
-            $self => [ qw(_start _client_error _client_input _listener_accept _listener_failed _reload _exit) ],
+            $self => [ qw(_start _client_error _client_input _listener_accept _listener_failed _exit) ],
         ],
     );
     return $self;
@@ -45,19 +45,19 @@ sub _start {
     
     while (my ($network_name, $network) = each %{ $self->{config}->{networks} }) {
         my $irc = $self->{ircs}->{$network_name} = POE::Component::IRC::State->spawn(
-            LocalAddr => $network->{bind_host},
-            Server    => $network->{server_host},
-            Port      => $network->{server_port},
-            Password  => $network->{server_pass},
-            UseSSL    => $network->{use_ssl},
-            Useipv6   => $network->{use_ipv6},
-            Nick      => $network->{nickname},
-            Username  => $network->{username},
-            Ircname   => $network->{realname},
-            Resolver  => $self->{resolver},
-            Debug     => $self->{Debug},
-            Raw       => 1,
-            AwayPoll  => 0,
+            LocalAddr    => $network->{bind_host},
+            Server       => $network->{server_host},
+            Port         => $network->{server_port},
+            Password     => $network->{server_pass},
+            UseSSL       => $network->{use_ssl},
+            Useipv6      => $network->{use_ipv6},
+            Nick         => $network->{nickname},
+            Username     => $network->{username},
+            Ircname      => $network->{realname},
+            Resolver     => $self->{resolver},
+            Debug        => $self->{Debug},
+            plugin_debug => $self->{Debug},
+            Raw          => 1,
         );
         
         $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new( Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE" ));
@@ -93,10 +93,10 @@ sub _start {
     }
     
     $self->_spawn_listener();
-    $poe_kernel->sig(HUP  => '_reload');
-    $poe_kernel->sig(INT  => '_exit');
-    $poe_kernel->sig(TERM => '_exit');
-    $poe_kernel->sig(DIE  => '_exit');
+#    $poe_kernel->sig(HUP  => '_reload');
+#    $poe_kernel->sig(INT  => '_exit');
+#    $poe_kernel->sig(TERM => '_exit');
+#    $poe_kernel->sig(DIE  => '_exit');
 }
 
 sub _client_error {
@@ -194,15 +194,15 @@ sub _load_config {
 }
 
 # reload the config file
-sub _reload {
-    my $self = shift;
-    my $old_config = $self->{config};
-    $self->_load_config();
-    
-    # TODO: check for new/removed networks
-    
-    $poe_kernel->sig_handled();
-}
+#sub _reload {
+#    my $self = shift;
+#    my $old_config = $self->{config};
+#    $self->_load_config();
+#    
+#    # TODO: check for new/removed networks
+#    
+#    $poe_kernel->sig_handled();
+#}
 
 # die gracefully
 sub _exit {
@@ -446,12 +446,12 @@ Here's an example in L<YAML|YAML> format:
 
 =item recall_mode
 
-(optional, default: "new")
+(optional, default: "missed")
 
 How many channel messages you want Bondage to remember, and then send
 to you when you attach.
 
-"new": Bondage will only recall the channel messages you missed since
+"missed": Bondage will only recall the channel messages you missed since
 the last time you detached from Bondage.
 
 "none": Bondage will not recall any channel messages.

@@ -91,6 +91,7 @@ sub S_ctcp_action {
     for my $recipient (@{ $recipients }) {
         if ($recipient eq $irc->nick_name()) {
             my $line = ":$sender PRIVMSG " . $irc->nick_name() . " :\x01ACTION$msg\x01";
+            print "saving msg: $line\n";
             push @{ $self->{recall} }, $line;
         }
     }
@@ -99,7 +100,7 @@ sub S_ctcp_action {
 
 sub S_msg {
     my ($self, $irc) = splice @_, 0, 2;
-    my $sender = ${ $_[0] }->[0];
+    my $sender = ${ $_[0] };
     my $msg = ${ $_[2] };
     
     if (!$self->{clients}) {
@@ -109,7 +110,7 @@ sub S_msg {
     
     return PCI_EAT_NONE;
 }
-
+              
 sub S_part {
     my ($self, $irc) = splice @_, 0, 2;
     my $chan = ${ $_[1] };
@@ -118,6 +119,8 @@ sub S_part {
         return PCI_EAT_NONE if $cycle->cycling($chan);
     }
 
+    # too CPU-heavy
+=pod
     if ($self->{Mode} eq 'all') {
         # remove all messages related to this channel
         my $input = $self->{filter}->get( $self->{recall} );
@@ -133,6 +136,7 @@ sub S_part {
             }
         }
     }
+=cut
     
     return PCI_EAT_NONE;
 }

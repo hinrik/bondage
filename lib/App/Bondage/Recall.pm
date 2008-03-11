@@ -10,11 +10,11 @@ use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Filter::IRCD;
 use Tie::File;
 
-our $VERSION = '1.2';
+our $VERSION = '1.3';
 
 sub new {
     my ($package, %self) = @_;
-    if (!$self{Mode} || $self{Mode} !~ /(missed|all|none)/) {
+    if (!$self{Mode} || $self{Mode} !~ /missed|all|none/) {
         $self{Mode} = 'missed';
     }
     return bless \%self, $package;
@@ -35,7 +35,7 @@ sub PCI_register {
     $self->{filter} = POE::Filter::IRCD->new();
     $self->{clients} = 0;
     $self->{recall} = [ ];
-    tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /(all|missed)/;
+    tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /all|missed/;
     $irc->raw_events(1);
   
     $irc->plugin_register($self, 'SERVER', qw(bot_ctcp_action bot_public connected ctcp_action msg part proxy_authed proxy_close raw));
@@ -53,7 +53,7 @@ sub S_bot_ctcp_action {
     my $recipients = join (',', @{ ${ $_[0] } });
     my $msg = ${ $_[1] };
     
-    if ($self->{Mode} =~ /(all|missed)/) {
+    if ($self->{Mode} =~ /all|missed/) {
         my $line = ':' . $irc->nick_long_form($irc->nick_name()) . " PRIVMSG $recipients :\x01ACTION $msg\x01";
         push @{ $self->{recall} }, $line;
     }
@@ -66,7 +66,7 @@ sub S_bot_public {
     my $recipients = join (',', @{ ${ $_[0] } });
     my $msg = ${ $_[1] };
 
-    if ($self->{Mode} =~ /(all|missed)/) {
+    if ($self->{Mode} =~ /all|missed/) {
         my $line = ':' . $irc->nick_long_form($irc->nick_name()) . " PRIVMSG $recipients :$msg";
         push @{ $self->{recall} }, $line;
     }
@@ -91,7 +91,6 @@ sub S_ctcp_action {
     for my $recipient (@{ $recipients }) {
         if ($recipient eq $irc->nick_name()) {
             my $line = ":$sender PRIVMSG " . $irc->nick_name() . " :\x01ACTION$msg\x01";
-            print "saving msg: $line\n";
             push @{ $self->{recall} }, $line;
         }
     }
@@ -127,7 +126,7 @@ sub S_part {
 #            if (lc $input->[$line]->{params}->[0] eq lc $chan) {
 #                delete $self->{recall}->[$line];
 #            }
-#            elsif ($input->[$line]->{command} =~ /(332|333|366)/ && lc $input->[$line]->{params}->[1] eq lc $chan) {
+#            elsif ($input->[$line]->{command} =~ /332|333|366/ && lc $input->[$line]->{params}->[1] eq lc $chan) {
 #                delete $self->{recall}->[$line];
 #            }
 #            elsif ($input->[$line]->{command} eq '353' && lc $input->[$line]->{params}->[2] eq lc $chan) {
@@ -168,12 +167,12 @@ sub S_raw {
             push @{ $self->{stash} }, $raw_line;
         }
         # RPL_ENDOFMOTD / ERR_NOMOTD
-        if ($input->{command} =~ /(376|422)/) {
+        if ($input->{command} =~ /376|422/) {
             $self->{stashing} = 0;
         }
     }
     
-    if ($self->{Mode} =~ /(all|missed)/) {
+    if ($self->{Mode} =~ /all|missed/) {
         if ($input->{command} eq 'PRIVMSG' && $input->{params}->[0] =~ /^[#&+!]/) {
             # channel messages
             push @{ $self->{recall} }, $raw_line;
@@ -182,11 +181,11 @@ sub S_raw {
             # channel mode changes
             push @{ $self->{recall} }, $raw_line;
         }
-        elsif ($input->{command} =~ /(JOIN|KICK|PART|QUIT|NICK|353|366)/) {
+        elsif ($input->{command} =~ /JOIN|KICK|PART|QUIT|NICK|353|366/) {
             # other channel-related things
             push @{ $self->{recall} }, $raw_line;
         }
-        elsif ($input->{command} =~ /(332|333)/) {
+        elsif ($input->{command} =~ /332|333/) {
             # only log topic stuff if we were just joining the channel
             push @{ $self->{recall} }, $raw_line if !$irc->channel_list($input->{params}->[0]);
         }

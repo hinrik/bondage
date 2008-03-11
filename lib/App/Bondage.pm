@@ -468,8 +468,7 @@ the last time you detached from Bondage.
 
 "none": Bondage will not recall any channel messages.
 
-"all": Bondage will recall all channel messages, and will
-only discard them when you leave the channel (wilfully).
+"all": Bondage will recall all channel messages.
 
 B<Note>: Bondage will always recall private messages that you missed
 while you were away, regardless of this option.
@@ -479,7 +478,7 @@ while you were away, regardless of this option.
 (optional, default: false)
 
 Set to true if you want Bondage to log all your public messages.
-They will be saved as C<~/.bondage/logs/some_network/#some_channel.log>
+They will be saved as F<~/.bondage/logs/some_network/#some_channel.log>
 unless you set log_sortbydate to true.
 
 =item log_private
@@ -487,7 +486,7 @@ unless you set log_sortbydate to true.
 (optional, default: false)
 
 Set to true if you want Bondage to log all private messages.
-They will be saved as C<~/.bondage/logs/some_network/some_nickname.log>
+They will be saved as F<~/.bondage/logs/some_network/some_nickname.log>
 unless you set log_sortbydate to true.
 
 =item log_sortbydate
@@ -495,7 +494,7 @@ unless you set log_sortbydate to true.
 (optional, default: false)
 
 Set to true if you want Bondage to rotate your logs.
-E.g. a channel log file might look like C<~/.bondage/logs/some_network/#channel/2008-01-30.log>
+E.g. a channel log file might look like F<~/.bondage/logs/some_network/#channel/2008-01-30.log>
 
 =item log_restricted
 

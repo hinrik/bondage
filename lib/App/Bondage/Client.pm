@@ -65,11 +65,14 @@ sub _start {
     
     my ($recall) = grep { $_->isa('App::Bondage::Recall') } @{ $self->{irc}->pipeline->{PIPELINE} };
     $self->{wheel}->put($recall->recall());
+    
+    return;
 }
 
 sub _client_error {
     my ($self, $id) = @_[OBJECT, ARG3];
     #$self->{irc}->plugin_del($self) if defined $self->{wheel};
+    return;
 }
 
 sub _client_input {
@@ -98,12 +101,15 @@ sub _client_input {
         }
     }
     $self->{irc}->yield(lc($input->{command}) => @{ $input->{params} });
+    
+    return;
 }
 
 sub _close_wheel {
     my $self = shift;
     $self->{irc}->send_event('irc_proxy_close' => $self->{wheel}->ID());
     delete $self->{wheel};
+    return;
 }
 
 sub S_raw {
@@ -116,6 +122,7 @@ sub S_raw {
 sub put {
     my ($self, $raw_line) = @_;
     $self->{wheel}->put($raw_line);
+    return;
 }
 
 1;

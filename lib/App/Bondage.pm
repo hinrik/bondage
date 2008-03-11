@@ -97,11 +97,14 @@ sub _start {
 #    $poe_kernel->sig(INT  => '_exit');
 #    $poe_kernel->sig(TERM => '_exit');
 #    $poe_kernel->sig(DIE  => '_exit');
+
+    return;
 }
 
 sub _client_error {
     my ($self, $id) = @_[OBJECT, ARG3];
     delete $self->{wheels}->{$id};
+    return;
 }
 
 sub _client_input {
@@ -133,6 +136,8 @@ sub _client_input {
         $info->{wheel}->put('ERROR :Closing Link: * [' . ( $info->{user} || 'unknown' ) . '@' . $info->{ip} . '] (Unauthorised connection)' );
         delete $self->{wheels}->{$id};
     }
+    
+    return;
 }
 
 sub _listener_accept {
@@ -150,6 +155,8 @@ sub _listener_accept {
     $self->{wheels}->{$id}->{ip} = inet_ntoa($peer_addr);
     $self->{wheels}->{$id}->{registered} = 0;
     $self->{wheels}->{$id}->{socket} = $socket;
+    
+    return;
 }
 
 sub _listener_failed {
@@ -175,6 +182,7 @@ sub _spawn_listener {
         eval { $self->{listener} = Server_SSLify($self->{listener}) };
         croak "Unable to SSLify the listener: $!; aborted" if $!;
     }
+    return;
 }
 
 sub _load_config {
@@ -191,6 +199,8 @@ sub _load_config {
             croak "Config option '$opt' must be defined; aborted";
         }
     }
+    
+    return;
 }
 
 # reload the config file
@@ -217,7 +227,9 @@ sub _exit {
             delete $self->{ircs}->{network};
         }
     }
+
     $poe_kernel->sig_handled();
+    return;
 }
 
 1;

@@ -120,24 +120,22 @@ sub S_part {
     }
 
     # too CPU-heavy
-=pod
-    if ($self->{Mode} eq 'all') {
-        # remove all messages related to this channel
-        my $input = $self->{filter}->get( $self->{recall} );
-        for my $line (0..$#{ $self->{recall} }) {
-            if (lc $input->[$line]->{params}->[0] eq lc $chan) {
-                delete $self->{recall}->[$line];
-            }
-            elsif ($input->[$line]->{command} =~ /(332|333|366)/ && lc $input->[$line]->{params}->[1] eq lc $chan) {
-                delete $self->{recall}->[$line];
-            }
-            elsif ($input->[$line]->{command} eq '353' && lc $input->[$line]->{params}->[2] eq lc $chan) {
-                delete $self->{recall}->[$line];
-            }
-        }
-    }
-=cut
-    
+#    if ($self->{Mode} eq 'all') {
+#        # remove all messages related to this channel
+#        my $input = $self->{filter}->get( $self->{recall} );
+#        for my $line (0..$#{ $self->{recall} }) {
+#            if (lc $input->[$line]->{params}->[0] eq lc $chan) {
+#                delete $self->{recall}->[$line];
+#            }
+#            elsif ($input->[$line]->{command} =~ /(332|333|366)/ && lc $input->[$line]->{params}->[1] eq lc $chan) {
+#                delete $self->{recall}->[$line];
+#            }
+#            elsif ($input->[$line]->{command} eq '353' && lc $input->[$line]->{params}->[2] eq lc $chan) {
+#                delete $self->{recall}->[$line];
+#            }
+#        }
+#    }
+
     return PCI_EAT_NONE;
 }
 
@@ -224,8 +222,8 @@ sub _get_chaninfo {
             my $nick = $_;
             my $prefix = '';
             $prefix = '@' if $irc->is_channel_operator($chan, $nick);
-            $prefix = '%' if $irc->is_channel_halfop($chan, $nick) and !$prefix;
-            $prefix = '+' if $irc->has_channel_voice($chan, $nick) and !$prefix;
+            $prefix = '%' if $irc->is_channel_halfop($chan, $nick) && !$prefix;
+            $prefix = '+' if $irc->has_channel_voice($chan, $nick) && !$prefix;
             $prefix . $nick;
         } $irc->channel_list($chan);
         

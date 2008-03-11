@@ -63,8 +63,9 @@ sub S_proxy_close {
 
 sub message {
     my ($self, $value) = @_;
-    return $self->{Message} unless defined($value);
+    return $self->{Message} if !defined $value;
     $self->{Message} = $value;
+    return;
 }
 
 1;

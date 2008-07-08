@@ -7,7 +7,7 @@ use POE qw(Filter::Line Filter::Stackable);
 use POE::Component::IRC::Plugin qw( :ALL );
 use POE::Filter::IRCD;
 
-our $VERSION = '1.0';
+our $VERSION = '1.1';
 
 sub new {
     my ($package, %self) = @_;
@@ -21,35 +21,45 @@ sub PCI_register {
     my ($self, $irc) = @_;
     
     if (!$irc->isa('POE::Component::IRC::State')) {
-        croak __PACKAGE__ . ' requires PoCo::IRC::State or a subclass thereof';
+        die __PACKAGE__ . " requires PoCo::IRC::State or a subclass thereof\n";
     }
     
     if (!grep { $_->isa('App::Bondage::Recall') } @{ $irc->pipeline->{PIPELINE} }) {
-        croak __PACKAGE__ . ' requires App::Bondage::Recall';
+        die __PACKAGE__ . " requires App::Bondage::Recall\n";
     }
     
-    $self->{filter} = POE::Filter::Stackable->new( Filters => [ POE::Filter::Line->new(), POE::Filter::IRCD->new() ] );
+    $self->{filter} = POE::Filter::Stackable->new(
+        Filters => [
+            POE::Filter::Line->new(),
+            POE::Filter::IRCD->new()
+        ]
+    );
+    
     $self->{irc} = $irc;
     $irc->raw_events(1);
     $irc->plugin_register($self, 'SERVER', qw(raw));
     
-    POE::Session->create(
+    $self->{session_id} = POE::Session->create(
         object_states => [
             $self => [ qw(_start _client_error _client_input) ],
         ],
-    );
+    )->ID();
+
     return 1;
 }
 
 sub PCI_unregister {
     my ($self, $irc) = @_;
-    $self->_close_wheel();
+    $self->{irc}->send_event(irc_proxy_close => $self->{wheel}->ID());
+    $poe_kernel->refcount_decrement($self->{session_id}, __PACKAGE__);
     return 1;
 }
 
 sub _start {
-    my $self = $_[OBJECT];
+    my ($kernel, $self) = @_[KERNEL, OBJECT];
     
+    $kernel->refcount_increment($self->{session_id}, __PACKAGE__);
+
     $self->{wheel} = POE::Wheel::ReadWrite->new(
         Handle       => $self->{Socket},
         InputFilter  => $self->{filter},
@@ -58,28 +68,25 @@ sub _start {
         ErrorEvent   => '_client_error',
     );
 
-    # send the user modes
-    if ($self->{irc}->umode()) {
-        $self->{wheel}->put(':' . $self->{irc}->server_name() . ' MODE ' . $self->{irc}->nick_name() . ' :+' . $self->{irc}->umode());
-    }
-    
-    my ($recall) = grep { $_->isa('App::Bondage::Recall') } @{ $self->{irc}->pipeline->{PIPELINE} };
-    $self->{wheel}->put($recall->recall());
+    my ($recall_plug) = grep { $_->isa('App::Bondage::Recall') } @{ $self->{irc}->pipeline->{PIPELINE} };
+    $self->{wheel}->put($recall_plug->recall());
     
     return;
 }
 
 sub _client_error {
     my ($self, $id) = @_[OBJECT, ARG3];
-    #$self->{irc}->plugin_del($self) if defined $self->{wheel};
+    
+    $self->{irc}->plugin_del($self);
     return;
 }
 
 sub _client_input {
     my ($self, $input) = @_[OBJECT, ARG0];
+    my $irc = $self->{irc};
     
     if ($input->{command} eq 'QUIT') {
-        $self->{irc}->plugin_del($self);
+        delete $self->{wheel};
         return;
     }
     elsif ($input->{command} eq 'PING') {
@@ -91,31 +98,25 @@ sub _client_input {
         if ($recipient =~ /^[#&+!]/) {
             # recreate channel messages from this client for
             # other clients to see
-            my $line = ':' . $self->{irc}->nick_long_form($self->{irc}->nick_name()) . " PRIVMSG $recipient :$msg";
+            my $line = ':' . $irc->nick_long_form($irc->nick_name()) . " PRIVMSG $recipient :$msg";
             
-            for my $client (grep { $_->isa('App::Bondage::Client') } @{ $self->{irc}->pipeline->{PIPELINE} } ) {
+            for my $client (grep { $_->isa('App::Bondage::Client') } @{ $irc->pipeline->{PIPELINE} } ) {
                 if ($client != $self) {
                     $client->put($line);
                 }
             }
         }
     }
-    $self->{irc}->yield(lc($input->{command}) => @{ $input->{params} });
     
-    return;
-}
-
-sub _close_wheel {
-    my $self = shift;
-    $self->{irc}->send_event('irc_proxy_close' => $self->{wheel}->ID());
-    delete $self->{wheel};
+    $irc->yield(lc($input->{command}) => @{ $input->{params} });
+    
     return;
 }
 
 sub S_raw {
     my ($self, $irc) = splice @_, 0, 2;
     my $raw_line = ${ $_[0] };
-    $self->{wheel}->put($raw_line);
+    $self->{wheel}->put($raw_line) if defined $self->{wheel};
     return PCI_EAT_NONE;
 }
 
@@ -130,8 +131,7 @@ __END__
 
 =head1 NAME
 
-App::Bondage::Client - A PoCo-IRC plugin which
-handles a proxy client.
+App::Bondage::Client - A PoCo-IRC plugin which handles a proxy client.
 
 =head1 SYNOPSIS
 
@@ -147,11 +147,9 @@ It handles a input/output and disconnects from a proxy client.
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
 or a subclass thereof.
 
-=head1 CONSTRUCTOR
+=head1 METHODS
 
-=over
-
-=item C<new>
+=head2 C<new>
 
 One argument:
 
@@ -160,21 +158,13 @@ One argument:
 Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
 C<plugin_add()> method.
 
-=back
-
-=head1 METHODS
-
-=over
-
-=item C<put>
+=head2 C<put>
 
 One argument:
 
 An IRC protocol line
 
 Sends an IRC protocol line to the client
-
-=back
 
 =head1 AUTHOR
 

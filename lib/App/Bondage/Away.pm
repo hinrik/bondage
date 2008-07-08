@@ -2,10 +2,9 @@ package App::Bondage::Away;
 
 use strict;
 use warnings;
-use Carp;
 use POE::Component::IRC::Plugin qw( :ALL );
 
-our $VERSION = '1.0';
+our $VERSION = '1.1';
 
 sub new {
     my ($package, %self) = @_;
@@ -16,7 +15,7 @@ sub PCI_register {
     my ($self, $irc) = @_;
     
     if (!$irc->isa('POE::Component::IRC::State')) {
-        croak __PACKAGE__ . ' requires PoCo::IRC::State or a subclass thereof';
+        die __PACKAGE__ . " requires PoCo::IRC::State or a subclass thereof\n";
     }
     
     $self->{Message} = 'No clients attached' unless defined $self->{Message};
@@ -91,11 +90,9 @@ When the last proxy client detaches, it changes the status to away, with the sup
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
 or a subclass thereof.
 
-=head1 CONSTRUCTOR
+=head1 METHODS
 
-=over
-
-=item C<new>
+=head2 C<new>
 
 One optional argument:
 
@@ -104,21 +101,13 @@ One optional argument:
 Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
 C<plugin_add()> method.
 
-=back
-
-=head1 METHODS
-
-=over
-
-=item message
+=head2 C<message>
 
 One optional argument:
 
 An away message
 
 Changes the away message when called with an argument, returns the current away message otherwise.
-
-=back
 
 =head1 AUTHOR
 

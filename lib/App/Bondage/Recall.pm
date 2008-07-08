@@ -2,7 +2,6 @@ package App::Bondage::Recall;
 
 use strict;
 use warnings;
-use Carp;
 use File::Temp qw(tempfile);
 use POE::Component::IRC::Common qw( parse_user );
 use POE::Component::IRC::Plugin qw( :ALL );
@@ -24,7 +23,7 @@ sub PCI_register {
     my ($self, $irc) = @_;
     
     if (!$irc->isa('POE::Component::IRC::State')) {
-        croak __PACKAGE__ . ' requires PoCo::IRC::State or a subclass thereof';
+        die __PACKAGE__ . " requires PoCo::IRC::State or a subclass thereof\n";
     }
     
     if (!grep { $_->isa('POE::Component::IRC::Plugin::BotTraffic') } @{ $irc->pipeline->{PIPELINE} }) {
@@ -76,31 +75,34 @@ sub S_bot_public {
 
 sub S_connected {
     my ($self, $irc) = splice @_, 0, 2;
-    $self->{stash} = [ ];
+    
+    $self->{stash}    = [ ];
     $self->{stashing} = 1;
     return PCI_EAT_NONE;
 }
 
 sub S_ctcp_action {
     my ($self, $irc) = splice @_, 0, 2;
-    my $sender = ${ $_[0] };
+    my $sender     = ${ $_[0] };
     my $recipients = ${ $_[1] };
-    my $msg = ${ $_[2] };
+    my $msg        = ${ $_[2] };
+
     return PCI_EAT_NONE if $self->{clients};
     
     for my $recipient (@{ $recipients }) {
         if ($recipient eq $irc->nick_name()) {
-            my $line = ":$sender PRIVMSG " . $irc->nick_name() . " :\x01ACTION$msg\x01";
+            my $line = ":$sender PRIVMSG $irc->nick_name :\x01ACTION$msg\x01";
             push @{ $self->{recall} }, $line;
         }
     }
+    
     return PCI_EAT_NONE;
 }
 
 sub S_msg {
     my ($self, $irc) = splice @_, 0, 2;
     my $sender = ${ $_[0] };
-    my $msg = ${ $_[2] };
+    my $msg    = ${ $_[2] };
     
     if (!$self->{clients}) {
         my $line = ":$sender PRIVMSG " . $irc->nick_name() . " :$msg";
@@ -163,7 +165,7 @@ sub S_raw {
     
     if ($self->{stashing}) {
         # capture all numeric commands until we've got the MOTD
-        if ($input->{command} =~ /\d\d\d/) {
+        if ($input->{command} =~ /\d{3}/) {
             push @{ $self->{stash} }, $raw_line;
         }
         # RPL_ENDOFMOTD / ERR_NOMOTD
@@ -195,9 +197,9 @@ sub S_raw {
 }
 
 sub _get_chaninfo {
-    my $self = shift;
-    my $irc = $self->{irc};
-    my $me = $irc->nick_name();
+    my ($self) = @_;
+    my $irc    = $self->{irc};
+    my $me     = $irc->nick_name();
     my $server = $irc->server_name();
 
     my @info;
@@ -247,14 +249,21 @@ sub _get_chaninfo {
 }
 
 sub recall {
-    my $self = shift;
-    my @lines = ();
-    
-    my $me = $self->{irc}->nick_name();
+    my ($self) = @_;
+    my $irc = $self->{irc};
+    my $me = $irc->nick_name();
+    my @lines;
+
     for my $line (@{ $self->{stash} }) {
-        $line =~ s/(\S+\s+\S+) +\S+ +(.*)/$1 $me $2/;
+        $line =~ s/^(\S+ +\S+) +\S+ +(.*)/$1 $me $2/;
         push @lines, $line;
     }
+    
+    # any user modes in effect?
+    if ($irc->umode()) {
+        push @lines, ":$irc->server_name MODE $irc->nick_name :+$irc->umode";
+    }
+    
     push @lines, @{ $self->{recall} };
 
     if ($self->{Mode} eq 'all') {
@@ -265,7 +274,6 @@ sub recall {
                 delete $self->{recall}->[$line];
             }
         }
-
     }
     elsif ($self->{Mode} eq 'missed') {
         $self->{recall} = [ ];
@@ -303,11 +311,9 @@ This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::C
 or a subclass thereof. It also requires a L<POE::Component::IRC::Plugin::BotTraffic|POE::Component::IRC::Plugin::BotTraffic>
 to be in the plugin pipeline. It will be added automatically if it is not present.
 
-=head1 CONSTRUCTOR
+=head1 METHODS
 
-=over
-
-=item C<new>
+=head2 C<new>
 
 One optional argument:
 
@@ -319,8 +325,6 @@ private messages, regardless of this option.
 
 Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
 C<plugin_add()> method.
-
-=back
 
 =head1 AUTHOR
 

@@ -22,7 +22,7 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 
-our $VERSION    = '0.2.5';
+our $VERSION    = '0.2.6';
 our $HOMEPAGE   = 'http://search.cpan.org/dist/App-Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
@@ -40,8 +40,14 @@ sub new {
 
 sub _start {
     my $self = $_[OBJECT];
-    $self->{filter} = POE::Filter::Stackable->new( Filters => [ POE::Filter::Line->new(), POE::Filter::IRCD->new() ] );
+    
     $self->{resolver} = POE::Component::Client::DNS->spawn();
+    $self->{filter} = POE::Filter::Stackable->new(
+        Filters => [
+            POE::Filter::Line->new(),
+            POE::Filter::IRCD->new()
+        ]
+    );
     
     while (my ($network_name, $network) = each %{ $self->{config}->{networks} }) {
         my $irc = $self->{ircs}->{$network_name} = POE::Component::IRC::State->spawn(
@@ -67,17 +73,15 @@ sub _start {
         $irc->plugin_add('AutoJoin',    POE::Component::IRC::Plugin::AutoJoin->new(
                                             Channels => $network->{channels},
                                             RejoinOnKick => $network->{kick_rejoin} ));
+        
         if (defined $network->{nickserv_pass}) {
             $irc->plugin_add('NickServID', POE::Component::IRC::Plugin::NickServID->new(
                                             Password => $network->{nickserv_pass}, ));
         }
+        
         if ($network->{log_public} || $network->{log_private}) {
-            my $log_dir = $self->{Work_dir} . '/logs';
-            if (! -d $log_dir) {
-                mkdir $log_dir, oct 700 or croak "Cannot create directory $log_dir $!; aborted";
-            }
             $irc->plugin_add('Logger', POE::Component::IRC::Plugin::Logger->new(
-                                           Path         => "$log_dir/$network_name",
+                                           Path         => "$self->{Work_dir}/logs/$network_name",
                                            Private      => $network->{log_private},
                                            Public       => $network->{log_public},
                                            Sort_by_date => $network->{log_sortbydate},
@@ -125,9 +129,9 @@ sub _client_input {
             $info->{pass} = md5_hex($info->{pass}, $CRYPT_SALT) if length $self->{config}->{password} == 32;
             last AUTH unless $info->{pass} eq $self->{config}->{password};
             last AUTH unless my $irc = $self->{ircs}->{ $info->{nick} };
-            $info->{wheel}->put($info->{nick} . ' NICK :' . $irc->nick_name());
+            $info->{wheel}->put("$info->{nick} NICK :$irc->nick_name");
             $irc->plugin_add("Client_$id" => App::Bondage::Client->new( Socket => $info->{socket} ));
-            $irc->_send_event('irc_proxy_authed' => $id);
+            $irc->_send_event(irc_proxy_authed => $id);
             delete $self->{wheels}->{$id};
             return;
         }
@@ -160,12 +164,12 @@ sub _listener_accept {
 }
 
 sub _listener_failed {
-    my ($self, $error, $wheel) = @_[OBJECT, ARG2, ARG3];
-    croak "Failed to spawn listener: $error; aborted";
+    my ($self, $error) = @_[OBJECT, ARG2];
+    die "Failed to spawn listener: $error; aborted\n";
 }
 
 sub _spawn_listener {
-    my $self = shift;
+    my ($self) = @_;
     $self->{listener} = POE::Wheel::SocketFactory->new(
         BindAddress  => $self->{config}->{listen_host},
         BindPort     => $self->{config}->{listen_port},
@@ -178,9 +182,9 @@ sub _spawn_listener {
         require POE::Component::SSLify;
         POE::Component::SSLify->import(qw(Server_SSLify SSLify_Options));
         eval { SSLify_Options("bondage.key", "bondage.crt") };
-        croak 'Unable to load SSL key (' . $self->{Work_dir} . '/bondage.key) or certificate (' . $self->{Work_dir} . "/bondage.crt): $!; aborted" if $!;
+        croak "Unable to load SSL key ($self->{Work_dir}/bondage.key) or certificate ($self->{Work_dir}/bondage.crt): $!; aborted" if $@;
         eval { $self->{listener} = Server_SSLify($self->{listener}) };
-        croak "Unable to SSLify the listener: $!; aborted" if $!;
+        croak "Unable to SSLify the listener: $@; aborted" if $@;
     }
     return;
 }
@@ -190,13 +194,13 @@ sub _load_config {
 
     my $cfg = Config::Any->load_files( {
         use_ext => 1,
-        files   => [ glob($self->{Work_dir} . '/config.*') ],
+        files   => [ glob("$self->{Work_dir}/config.*") ],
     } );
     $self->{config} = ((values %{$cfg->[0]})[0]);
 
     for my $opt (qw(listen_port password)) {
         if (!defined $self->{config}->{$opt}) {
-            croak "Config option '$opt' must be defined; aborted";
+            die "Config option '$opt' must be defined; aborted\n";
         }
     }
     
@@ -264,11 +268,9 @@ in an undesirable (if not buggy) way. I've tried to make Bondage
 stay out of your way and be as transparent as possible.
 It's supposed to be a proxy, after all.
 
-=head2 FEATURES
+=head1 FEATURES
 
-=over
-
-=item Easy setup
+=head2 Easy setup
 
 Bondage is easy to get up and running. In the configuration file,
 you just have to specify the port it will listen on, the password,
@@ -276,70 +278,68 @@ and some IRC server(s) you want Bondage to connect to. Everything
 else has sensible defaults, though you might want to use a custom
 nickname and pick some channels to join on connect.
 
-=item Logging
+=head2 Logging
 
 Bondage can log both public and private messages for you.
 All log files are in UTF-8.
 
-=item Stays connected
+=head2 Stays connected
 
 Bondage will reconnect to IRC when it gets disconnected or
 the IRC server stops responding.
 
-=item Recall messages
+=head2 Recall messages
 
 Bondage can send you all the messages you missed since you detached,
 or it can send you all messages received since it connected to
 the IRC server, or neither. This feature is based on similar features
 found in miau, dircproxy, and ctrlproxy.
 
-=item Auto-away
+=head2 Auto-away
 
 Bondage will set your status to away when no clients are attached.
 
-=item Reclaim nickname
+=head2 Reclaim nickname
 
 Bondage will periodically try to change to your preferred nickname
 if it is taken.
 
-=item Flood protection
+=head2 Flood protection
 
 Bondage utilizes POE::Component::IRC's flood protection to ensure
 that you never flood yourself off the IRC server.
 
-=item NickServ support
+=head2 NickServ support
 
 Bondage can identify with NickServ for you when needed.
 
-=item Rejoin channel if kicked
+=head2 Rejoin channel if kicked
 
 Bondage can try to rejoin a channel if you get kicked from it.
 
-=item Encrypted passwords
+=head2 Encrypted passwords
 
 Bondage supports encrypted passwords in its configuration file
 for added security.
 
-=item SSL support
+=head2 SSL support
 
 You can connect to SSL-enabled IRC servers, and make B<bondage> require
 SSL for client connections.
 
-=item IPv6 support
+=head2 IPv6 support
 
 Bondage can connect to IPv6 IRC servers, and also listen for client
 connections via IPv6.
 
-=item Cycle empty channels
+=head2 Cycle empty channels
 
 Bondage can cycle (part and rejoin) channels for you when they
 become empty in order to gain ops.
 
-=item CTCP replies
+=head2 CTCP replies
 
 Bondage will reply to CTCP VERSION requests when you are offline.
-
-=back
 
 =head1 CONFIGURATION
 
@@ -347,22 +347,20 @@ The following options are recognized in the configuration file which
 can be called F<~/.bondage/config.EXT> where EXT is an extension
 recognized by L<Config::Any|Config::Any>.
 
-=over
-
-=item listen_host
+=head2 C<listen_host>
 
 (optional, default: "0.0.0.0")
 
 The host that Bondage> listens on and accepts connections from.
 This is the host you use to connect to Bondage.
 
-=item listen_port
+=head2 C<listen_port>
 
 (required, no default)
 
 The port Bondage binds to.
 
-=item listen_ssl
+=head2 C<listen_ssl>
 
 (optional, default: false)
 
@@ -371,21 +369,17 @@ for client connections.
 More information:
 http://www.akadia.com/services/ssh_test_certificate.html
 
-=item password
+=head2 C<password>
 
 (required, no default)
 
 The password you use to connect to Bondage. If it is 32 letters,
 it is assumed to be encrypted (see C<bondage -c>);
 
-=back
-
 B<Note:> The rest of the options are specific to the B<network>
 block they appear in.
 
-=over
-
-=item bind_host
+=head2 C<bind_host>
 
 (optional, default: "0.0.0.0")
 
@@ -393,32 +387,32 @@ The host that Bondage binds to and connects to IRC from.
 Useful if you have multiple IPs and want to choose which one
 to IRC from.
 
-=item server_host
+=head2 C<server_host>
 
 (required, no default)
 
 The IRC server you want Bondage to connect to.
 
-=item server_port
+=head2 C<server_port>
 
 (optional, default: 6667)
 
 The port on the IRC server you want to use.
 
-=item server_pass
+=head2 C<server_pass>
 
 (optional, no default)
 
 The IRC server password, if there is one.
 
-=item use_ssl
+=head2 C<use_ssl>
 
 (optional, default: false)
 
 Set this to true if you want to use SSL to communicate with
 the IRC server.
 
-=item nickserv_pass
+=head2 C<nickserv_pass>
 
 (optional, no default)
 
@@ -426,25 +420,25 @@ Your NickServ password on the IRC network, if you have one.
 Bondage will identify with NickServ with this password on connect,
 and whenever you switch to your original nickname.
 
-=item nickname
+=head2 C<nickname>
 
 (optional, default: your UNIX user name)
 
 Your IRC nick name.
 
-=item username
+=head2 C<username>
 
 (optional, default: your UNIX user name)
 
 Your IRC user name.
 
-=item realname
+=head2 C<realname>
 
 (optional, default: your UNIX real name, if any)
 
 Your IRC real name, or email, or whatever.
 
-=item channels
+=head2 C<channels>
 
 (optional, no default)
 
@@ -456,7 +450,7 @@ Here's an example in L<YAML|YAML> format:
    "chan2" : "password"
    "chan3" : ""
 
-=item recall_mode
+=head2 C<recall_mode>
 
 (optional, default: "missed")
 
@@ -473,7 +467,7 @@ the last time you detached from Bondage.
 B<Note>: Bondage will always recall private messages that you missed
 while you were away, regardless of this option.
 
-=item log_public
+=head2 C<log_public>
 
 (optional, default: false)
 
@@ -481,7 +475,7 @@ Set to true if you want Bondage to log all your public messages.
 They will be saved as F<~/.bondage/logs/some_network/#some_channel.log>
 unless you set log_sortbydate to true.
 
-=item log_private
+=head2 C<log_private>
 
 (optional, default: false)
 
@@ -489,41 +483,37 @@ Set to true if you want Bondage to log all private messages.
 They will be saved as F<~/.bondage/logs/some_network/some_nickname.log>
 unless you set log_sortbydate to true.
 
-=item log_sortbydate
+=head2 C<log_sortbydate>
 
 (optional, default: false)
 
 Set to true if you want Bondage to rotate your logs.
 E.g. a channel log file might look like F<~/.bondage/logs/some_network/#channel/2008-01-30.log>
 
-=item log_restricted
+=head2 C<log_restricted>
 
 (optional, default: false)
 
 Set this to true if you want Bondage to restrict the read permissions
 on created log files/directories so other users won't be able to access them.
 
-=item cycle_empty
+=head2 C<cycle_empty>
 
 (optional, default: false)
 
 Set to true if you want Bondage to cycle (part and rejoin)
 opless channels if they become empty.
 
-=item kick_rejoin
+=head2 C<kick_rejoin>
 
 (optional, default: false)
 
 Set to true if you want Bondage to try to rejoin a channel (once)
 if you get kicked from it.
 
-=back
+=head1 METHODS
 
-=head1 CONSTRUCTOR
-
-=over
-
-=item C<new>
+=head2 C<new>
 
 Arguments:
 
@@ -531,8 +521,6 @@ Arguments:
 file. This option is required.
 
 'Debug', set to 1 to enable debugging. Default is 0.
-
-=back
 
 =head1 DEPENDENCIES
 
@@ -556,12 +544,13 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
 
 Exit cleanly when clients are attached.
 
-DCC send support.
+DCC send forwarding support.
 
 Answer common client requests like WHO/MODE without asking the server,
-so other clients won't be bothered with unnecessary traffic.
+so other clients won't be bothered with unnecessary traffic. Look into
+irssi's command redirection feature.
 
-Reload the configuration file upon being sent a SIGHUP and do something useful.
+Reload the configuration file upon being sent a SIGHUP.
 
 =head1 AUTHOR
 

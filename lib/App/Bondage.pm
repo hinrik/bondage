@@ -220,16 +220,13 @@ sub _load_config {
 
 # die gracefully
 sub _exit {
-    my $self = shift;
+    my ($self) = @_;
     if (defined $self->{resolver}) {
         delete $self->{listener};
         $self->{resolver}->shutdown();
         delete $self->{resolver};
-        while (my ($network, $irc) = each %{ $self->{ircs} }) {
-            $irc->yield(shutdown => 'Killed by user');
-            $irc->yield(unregister => 'all');
-            delete $self->{ircs}->{network};
-        }
+        $poe_kernel->signal($poe_kernel, 'POCOIRC_SHUTDOWN', 'Killed by user');
+        delete $self->{ircs};
     }
 
     $poe_kernel->sig_handled();

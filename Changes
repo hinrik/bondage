@@ -1,5 +1,6 @@
 0.2.6
     - Remove a debugging print statement, doh
+    - Should detach from the terminal now
 
 0.2.5 Tue Mar 11 01:42:08 GMT 2008
     - Fix PM recalling

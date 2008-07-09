@@ -9,14 +9,11 @@ use Pod::Usage;
 use POE;
 use POE::Component::Daemon;
 
-my $work_dir = "$ENV{HOME}/.bondage";
-my $debug = 0;
-
 GetOptions(
     'c|crypt'     => \&encrypt_pass,
-    'd|debug'     => \$debug,
+    'd|debug'     => \my $debug,
     'v|version'   => sub { print "Bondage $App::Bondage::VERSION, $App::Bondage::HOMEPAGE\n"; exit },
-    'w|workdir=s' => \$work_dir,
+    'w|workdir=s' => \(my $work_dir = "$ENV{HOME}/.bondage"),
 ) or pod2usage();
 
 my $bouncer = App::Bondage->new( Debug => $debug, Work_dir => $work_dir );

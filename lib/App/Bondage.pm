@@ -92,15 +92,12 @@ sub _start {
         $irc->plugin_add('Away',   App::Bondage::Away->new( Message => $network->{away_msg}));
         $irc->plugin_add('Recall', App::Bondage::Recall->new( Mode => $network->{recall_mode} ));
 
-        $irc->yield(register => 'all');
         $irc->yield(connect => { });
     }
     
     $self->_spawn_listener();
+    $poe_kernel->sig(INT  => '_exit');
 #    $poe_kernel->sig(HUP  => '_reload');
-#    $poe_kernel->sig(INT  => '_exit');
-#    $poe_kernel->sig(TERM => '_exit');
-#    $poe_kernel->sig(DIE  => '_exit');
 
     return;
 }
@@ -220,16 +217,15 @@ sub _load_config {
 
 # die gracefully
 sub _exit {
-    my ($self) = @_;
-    if (defined $self->{resolver}) {
+    my ($kernel, $self) = @_[KERNEL, OBJECT];
+    if (defined $self->{listener}) {
+        delete $self->{wheels};
         delete $self->{listener};
         $self->{resolver}->shutdown();
-        delete $self->{resolver};
-        $poe_kernel->signal($poe_kernel, 'POCOIRC_SHUTDOWN', 'Killed by user');
-        delete $self->{ircs};
+        $kernel->signal($kernel, 'POCOIRC_SHUTDOWN', 'Killed by user');
     }
 
-    $poe_kernel->sig_handled();
+    $kernel->sig_handled();
     return;
 }
 

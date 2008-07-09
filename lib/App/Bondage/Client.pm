@@ -31,7 +31,7 @@ sub PCI_register {
     $self->{filter} = POE::Filter::Stackable->new(
         Filters => [
             POE::Filter::Line->new(),
-            POE::Filter::IRCD->new()
+            POE::Filter::IRCD->new(),
         ]
     );
     
@@ -50,7 +50,9 @@ sub PCI_register {
 
 sub PCI_unregister {
     my ($self, $irc) = @_;
+    
     $self->{irc}->send_event(irc_proxy_close => $self->{wheel}->ID());
+    delete $self->{wheel};
     $poe_kernel->refcount_decrement($self->{session_id}, __PACKAGE__);
     return 1;
 }
@@ -75,9 +77,10 @@ sub _start {
 }
 
 sub _client_error {
-    my ($self, $id) = @_[OBJECT, ARG3];
+    my ($self) = $_[OBJECT];
+    my $irc = $self->{irc};
     
-    $self->{irc}->plugin_del($self);
+    $irc->plugin_del($self) if grep { $_ == $self } values %{ $irc->plugin_list() };
     return;
 }
 
@@ -108,7 +111,7 @@ sub _client_input {
         }
     }
     
-    $irc->yield(lc($input->{command}) => @{ $input->{params} });
+    $irc->yield(quote => lc($input->{command}) => @{ $input->{params} });
     
     return;
 }
@@ -122,7 +125,7 @@ sub S_raw {
 
 sub put {
     my ($self, $raw_line) = @_;
-    $self->{wheel}->put($raw_line);
+    $self->{wheel}->put($raw_line) if defined $self->{wheel};
     return;
 }
 

@@ -22,7 +22,7 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 
-our $VERSION    = '0.2.6';
+our $VERSION    = '0.3.0';
 our $HOMEPAGE   = 'http://search.cpan.org/perldoc?App::Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 

@@ -9,7 +9,7 @@ use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Filter::IRCD;
 use Tie::File;
 
-our $VERSION = '1.3';
+our $VERSION = '1.4';
 
 sub new {
     my ($package, %self) = @_;
@@ -30,13 +30,14 @@ sub PCI_register {
         $irc->plugin_add('BotTraffic', POE::Component::IRC::Plugin::BotTraffic->new());
     }
     
-    $self->{irc} = $irc;
-    $self->{filter} = POE::Filter::IRCD->new();
+    $self->{irc}     = $irc;
+    $self->{filter}  = POE::Filter::IRCD->new();
     $self->{clients} = 0;
-    $self->{recall} = [ ];
+    $self->{recall}  = [ ];
+    
     tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /all|missed/;
+    
     $irc->raw_events(1);
-  
     $irc->plugin_register($self, 'SERVER', qw(bot_ctcp_action bot_public connected ctcp_action msg part proxy_authed proxy_close raw));
     return 1;
 }
@@ -49,8 +50,8 @@ sub PCI_unregister {
 
 sub S_bot_ctcp_action {
     my ($self, $irc) = splice @_, 0, 2;
-    my $recipients = join (',', @{ ${ $_[0] } });
-    my $msg = ${ $_[1] };
+    my $recipients   = join (',', @{ ${ $_[0] } });
+    my $msg          = ${ $_[1] };
     
     if ($self->{Mode} =~ /all|missed/) {
         my $line = ':' . $irc->nick_long_form($irc->nick_name()) . " PRIVMSG $recipients :\x01ACTION $msg\x01";
@@ -62,8 +63,8 @@ sub S_bot_ctcp_action {
 
 sub S_bot_public {
     my ($self, $irc) = splice @_, 0, 2;
-    my $recipients = join (',', @{ ${ $_[0] } });
-    my $msg = ${ $_[1] };
+    my $recipients   = join (',', @{ ${ $_[0] } });
+    my $msg          = ${ $_[1] };
 
     if ($self->{Mode} =~ /all|missed/) {
         my $line = ':' . $irc->nick_long_form($irc->nick_name()) . " PRIVMSG $recipients :$msg";
@@ -83,9 +84,9 @@ sub S_connected {
 
 sub S_ctcp_action {
     my ($self, $irc) = splice @_, 0, 2;
-    my $sender     = ${ $_[0] };
-    my $recipients = ${ $_[1] };
-    my $msg        = ${ $_[2] };
+    my $sender       = ${ $_[0] };
+    my $recipients   = ${ $_[1] };
+    my $msg          = ${ $_[2] };
 
     return PCI_EAT_NONE if $self->{clients};
     
@@ -101,8 +102,8 @@ sub S_ctcp_action {
 
 sub S_msg {
     my ($self, $irc) = splice @_, 0, 2;
-    my $sender = ${ $_[0] };
-    my $msg    = ${ $_[2] };
+    my $sender       = ${ $_[0] };
+    my $msg          = ${ $_[2] };
     
     if (!$self->{clients}) {
         my $line = ":$sender PRIVMSG " . $irc->nick_name() . " :$msg";
@@ -114,7 +115,7 @@ sub S_msg {
               
 sub S_part {
     my ($self, $irc) = splice @_, 0, 2;
-    my $chan = ${ $_[1] };
+    my $chan         = ${ $_[1] };
 
     if (my $cycle = grep { $_->isa('POE::Component::IRC::Plugin::CycleEmpty') } @{ $irc->pipeline->{PIPELINE} } ) {
         return PCI_EAT_NONE if $cycle->cycling($chan);
@@ -250,8 +251,8 @@ sub _get_chaninfo {
 
 sub recall {
     my ($self) = @_;
-    my $irc = $self->{irc};
-    my $me = $irc->nick_name();
+    my $irc    = $self->{irc};
+    my $me     = $irc->nick_name();
     my @lines;
 
     for my $line (@{ $self->{stash} }) {

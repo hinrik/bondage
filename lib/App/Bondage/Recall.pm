@@ -184,7 +184,7 @@ sub S_raw {
             # channel mode changes
             push @{ $self->{recall} }, $raw_line;
         }
-        elsif ($input->{command} =~ /JOIN|KICK|PART|QUIT|NICK|353|366/) {
+        elsif ($input->{command} =~ /JOIN|KICK|PART|QUIT|NICK|TOPIC|353|366/) {
             # other channel-related things
             push @{ $self->{recall} }, $raw_line;
         }
@@ -197,6 +197,8 @@ sub S_raw {
     return PCI_EAT_NONE;
 }
 
+# returns everything that an IRC server would send us upon joining
+# the channels we're on
 sub _get_chaninfo {
     my ($self) = @_;
     my $irc    = $self->{irc};

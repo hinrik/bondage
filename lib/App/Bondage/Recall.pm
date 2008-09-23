@@ -9,7 +9,7 @@ use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Filter::IRCD;
 use Tie::File;
 
-our $VERSION = '1.4';
+our $VERSION = '1.3';
 
 sub new {
     my ($package, %self) = @_;

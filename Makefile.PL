@@ -19,6 +19,6 @@ WriteMakefile(
         'Carp'                        => '0',
         'Config'                      => '0',
         'Digest::MD5'                 => '0',
-        'Test::More'                  => '1',
+        'Test::More'                  => '0',
     }
 );

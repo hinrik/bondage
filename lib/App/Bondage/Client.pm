@@ -51,12 +51,14 @@ sub PCI_register {
 sub PCI_unregister {
     my ($self, $irc) = @_;
 
-    $self->_close_wheel();
+    $poe_kernel->call("$self", '_client_error');
     return 1;
 }
 
 sub _start {
     my ($kernel, $self) = @_[KERNEL, OBJECT];
+
+    $kernel->alias_set("$self");
 
     $self->{wheel} = POE::Wheel::ReadWrite->new(
         Handle       => $self->{Socket},
@@ -66,7 +68,7 @@ sub _start {
         ErrorEvent   => '_client_error',
     );
     delete $self->{Socket};
-    $self->{id} = $self->{wheel}->ID();
+    $self->{wheel_id} = $self->{wheel}->ID();
 
     my ($recall_plug) = grep { $_->isa('App::Bondage::Recall') } @{ $self->{irc}->pipeline->{PIPELINE} };
     $self->{wheel}->put($recall_plug->recall());
@@ -74,23 +76,18 @@ sub _start {
     return;
 }
 
-sub _close_wheel {
-    my ($self) = @_;
-    my $irc = $self->{irc};
-    return if !$self->{wheel};
-
-    $self->{wheel}->put('ERROR :Closing link');
-    delete $self->{wheel};
-    $irc->send_event(irc_proxy_close => $self->{id});
-    return;
-}
-
 sub _client_error {
-    my ($self) = $_[OBJECT];
+    my ($kernel, $self) = @_[KERNEL, OBJECT];
     my $irc = $self->{irc};
     
-    $self->_close_wheel();
-    $irc->plugin_del($self);
+    if ($self->{wheel}) {
+        $self->{wheel}->put('ERROR :Closing link (Caught interrupt)');
+        $self->{wheel}->flush();
+        delete $self->{wheel};
+        $irc->send_event(irc_proxy_close => $self->{wheel_id});
+        $kernel->alias_remove("$self");
+        $irc->plugin_del($self) if grep { $_ == $self } values %{ $irc->plugin_list() };
+    }
     return;
 }
 
@@ -99,7 +96,6 @@ sub _client_input {
     my $irc = $self->{irc};
     
     if ($input->{command} eq 'QUIT') {
-        $self->_close_wheel();
         $irc->plugin_del($self);
         return;
     }

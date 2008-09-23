@@ -223,7 +223,7 @@ sub _exit {
         delete $self->{wheels};
         delete $self->{listener};
         $self->{resolver}->shutdown();
-        $kernel->signal($kernel, 'POCOIRC_SHUTDOWN', 'Killed by user');
+        $kernel->signal($kernel, 'POCOIRC_SHUTDOWN', 'Caught interrupt');
     }
 
     $kernel->sig_handled();
@@ -275,7 +275,7 @@ nickname and pick some channels to join on connect.
 =head2 Logging
 
 Bondage can log both public and private messages for you.
-All log files are in UTF-8.
+All log files are saved as UTF-8.
 
 =head2 Stays connected
 
@@ -547,8 +547,6 @@ Report all bugs, feature requests, etc, here:
 http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
 
 =head1 TODO
-
-Exit cleanly when clients are attached.
 
 DCC send forwarding support.
 

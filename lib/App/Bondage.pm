@@ -30,6 +30,7 @@ sub new {
     my ($package, %params) = @_;
     my $self = bless \%params, $package;
     $self->_load_config();
+    
     POE::Session->create(
         object_states => [
             $self => [ qw(_start _client_error _client_input _listener_accept _listener_failed _exit) ],

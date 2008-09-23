@@ -545,6 +545,8 @@ irssi's command redirection feature.
 
 Reload the configuration file upon being sent a SIGHUP.
 
+Add proper tests.
+
 =head1 AUTHOR
 
 Hinrik E<Ouml>rn SigurE<eth>sson, hinrik.sig@gmail.com

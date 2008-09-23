@@ -24,7 +24,7 @@ sub PCI_register {
         die __PACKAGE__ . " requires PoCo::IRC::State or a subclass thereof\n";
     }
     
-    if (!grep { $_->isa('App::Bondage::Recall') } @{ $irc->pipeline->{PIPELINE} }) {
+    if (!grep { $_->isa('App::Bondage::Recall') } values %{ $irc->plugin_list() } ) {
         die __PACKAGE__ . " requires App::Bondage::Recall\n";
     }
     
@@ -52,8 +52,15 @@ sub PCI_unregister {
     my ($self, $irc) = @_;
     
     $self->{irc}->send_event(irc_proxy_close => $self->{wheel}->ID());
-    delete $self->{wheel};
+    
+    if (defined $self->{wheel}) {
+        $self->{wheel}->put('ERROR :Be gone now');
+        delete $self->{wheel};
+        close $self->{Socket};
+    }
+    
     $poe_kernel->refcount_decrement($self->{session_id}, __PACKAGE__);
+    $DB::single=1;
     return 1;
 }
 
@@ -111,7 +118,7 @@ sub _client_input {
         }
     }
     
-    $irc->yield(quote => lc($input->{command}) => @{ $input->{params} });
+    $irc->yield(quote => $input->{raw_line});
     
     return;
 }

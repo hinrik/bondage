@@ -154,9 +154,8 @@ sub S_public {
         push @{ $self->{recall} }, ":$sender PRIVMSG $chan :$msg";
     }
 
-    return;
+    return PCI_EAT_NONE;
 }
-    
 
 sub S_proxy_authed {
     my ($self, $irc) = splice @_, 0, 2;

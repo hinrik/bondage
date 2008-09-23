@@ -22,7 +22,7 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 
-our $VERSION    = '0.2.6';
+our $VERSION    = '0.2.7';
 our $HOMEPAGE   = 'http://search.cpan.org/dist/App-Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
@@ -178,7 +178,7 @@ sub _spawn_listener {
     if ($self->{config}->{listen_ssl}) {
         require POE::Component::SSLify;
         POE::Component::SSLify->import(qw(Server_SSLify SSLify_Options));
-        eval { SSLify_Options("bondage.key", "bondage.crt") };
+        eval { SSLify_Options('bondage.key', 'bondage.crt') };
         croak "Unable to load SSL key ($self->{Work_dir}/bondage.key) or certificate ($self->{Work_dir}/bondage.crt): $!; aborted" if $@;
         eval { $self->{listener} = Server_SSLify($self->{listener}) };
         croak "Unable to SSLify the listener: $@; aborted" if $@;

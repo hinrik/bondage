@@ -1,9 +1,8 @@
-0.2.7
-    - Make recall keep track of topic changes
-
 0.2.6
+    - Make recall keep track of topic changes
     - Remove a debugging print statement, doh
     - Should detach from the terminal now
+    - Moved 'bondage' from bin/ to script/ since it's not a binary
 
 0.2.5 Tue Mar 11 01:42:08 GMT 2008
     - Fix PM recalling

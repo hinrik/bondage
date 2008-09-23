@@ -7,7 +7,7 @@ WriteMakefile(
     VERSION_FROM  => 'lib/App/Bondage.pm',
     ABSTRACT_FROM => 'lib/App/Bondage.pm',
     LICENSE       => 'perl',
-    EXE_FILES     => [ 'bin/bondage' ],
+    EXE_FILES     => [ 'script/bondage' ],
     PREREQ_PM     => {
         'POE::Component::Client::DNS' => '0.99',
         'POE::Component::Daemon'      => '0',

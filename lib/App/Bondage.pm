@@ -22,8 +22,8 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 
-our $VERSION    = '0.2.7';
-our $HOMEPAGE   = 'http://search.cpan.org/dist/App-Bondage';
+our $VERSION    = '0.2.6';
+our $HOMEPAGE   = 'http://search.cpan.org/perldoc?App::Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
 sub new {
@@ -253,7 +253,7 @@ it will be made modular and reusable, probably as a
 L<POE::Component::IRC|POE::Component::IRC> plugin. This keeps
 the code short and (hopefully) well tested by others.
 
-=head2 RATIONALE
+=head2 Rationale
 
 I wrote Bondage because no other IRC bouncer out there fit my needs.
 Either they were missing essential features, or they were implemented
@@ -306,7 +306,7 @@ that you never flood yourself off the IRC server.
 
 Bondage can identify with NickServ for you when needed.
 
-=head2 Rejoin channel if kicked
+=head2 Rejoins channels if kicked
 
 Bondage can try to rejoin a channel if you get kicked from it.
 
@@ -317,7 +317,7 @@ for added security.
 
 =head2 SSL support
 
-You can connect to SSL-enabled IRC servers, and make B<bondage> require
+You can connect to SSL-enabled IRC servers, and make Bondage require
 SSL for client connections.
 
 =head2 IPv6 support
@@ -325,7 +325,7 @@ SSL for client connections.
 Bondage can connect to IPv6 IRC servers, and also listen for client
 connections via IPv6.
 
-=head2 Cycle empty channels
+=head2 Cycles empty channels
 
 Bondage can cycle (part and rejoin) channels for you when they
 become empty in order to gain ops.
@@ -344,8 +344,8 @@ recognized by L<Config::Any|Config::Any>.
 
 (optional, default: "0.0.0.0")
 
-The host that Bondage> listens on and accepts connections from.
-This is the host you use to connect to Bondage.
+The host that Bondage accepts connections from. This is the host you
+use to connect to Bondage.
 
 =head2 C<listen_port>
 
@@ -357,7 +357,7 @@ The port Bondage binds to.
 
 (optional, default: false)
 
-Set this to true if you want bondage to require the use of SSL
+Set this to true if you want Bondage to require the use of SSL
 for client connections.
 More information:
 http://www.akadia.com/services/ssh_test_certificate.html
@@ -366,8 +366,8 @@ http://www.akadia.com/services/ssh_test_certificate.html
 
 (required, no default)
 
-The password you use to connect to Bondage. If it is 32 letters,
-it is assumed to be encrypted (see C<bondage -c>);
+The password you use to connect to Bondage. If it is 32 characters,
+it is assumed to be encrypted (see L<C<bondage -c>|bondage/"SYNOPSIS">);
 
 B<Note:> The rest of the options are specific to the B<network>
 block they appear in.
@@ -481,7 +481,8 @@ unless you set log_sortbydate to true.
 (optional, default: false)
 
 Set to true if you want Bondage to rotate your logs.
-E.g. a channel log file might look like F<~/.bondage/logs/some_network/#channel/2008-01-30.log>
+E.g. a channel log file might look like
+F<~/.bondage/logs/some_network/#channel/2008-01-30.log>
 
 =head2 C<log_restricted>
 
@@ -519,14 +520,25 @@ file. This option is required.
 
 The following CPAN distributions are required:
 
- Config-Any
- POE
- POE-Component-Client-DNS
- POE-Component-Daemon
- POE-Component-IRC
- POE-Component-SSLify (only if you need SSL support)
- POE-Filter-IRCD
- Socket6 (only if you need ipv6 support)
+=over 
+
+=item L<Config-Any|Config::Any>
+
+=item L<POE|POE>
+
+=item L<POE-Component-Client-DNS|POE::Component::Client::DNS>
+
+=item L<POE-Component-Daemon|POE::Component::Daemon>
+
+=item L<POE-Component-IRC|POE::Component::IRC>
+
+=item L<POE-Component-SSLify|POE::Component::IRC> (only if you need SSL support)
+
+=item L<POE-Filter-IRCD|POE::Filter::IRCD>
+
+=item L<Socket6|Socket6> (only if you need ipv6 support)
+
+=back
 
 =head1 BUGS
 
@@ -562,12 +574,22 @@ it under the same terms as Perl itself.
 
 Other useful IRC bouncers:
 
- http://miau.sourceforge.net
- http://znc.sourceforge.net
- http://dircproxy.securiweb.net
- http://ctrlproxy.vernstok.nl
- http://www.psybnc.at
- http://irssi.org/documentation/proxy
- http://bip.t1r.net
+=over
+
+=item L<http://miau.sourceforge.net>
+
+=item L<http://znc.sourceforge.net>
+
+=item L<http://dircproxy.securiweb.net>
+
+=item L<http://ctrlproxy.vernstok.nl>
+
+=item L<http://www.psybnc.at>
+
+=item L<http://irssi.org/documentation/proxy>
+
+=item L<http://bip.t1r.net>
+
+=back
 
 =cut

@@ -38,7 +38,7 @@ sub PCI_register {
     tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /all|missed/;
     
     $irc->raw_events(1);
-    $irc->plugin_register($self, 'SERVER', qw(bot_ctcp_action bot_public connected ctcp_action msg part proxy_authed proxy_close raw));
+    $irc->plugin_register($self, 'SERVER', qw(bot_ctcp_action bot_public connected ctcp_action msg public part proxy_authed proxy_close raw));
     return 1;
 }
 
@@ -79,6 +79,7 @@ sub S_connected {
     
     $self->{stash}    = [ ];
     $self->{stashing} = 1;
+    $self->{idmsg}    = 0;
     return PCI_EAT_NONE;
 }
 
@@ -106,10 +107,10 @@ sub S_msg {
     my $msg          = ${ $_[2] };
     
     if (!$self->{clients}) {
-        my $line = ":$sender PRIVMSG " . $irc->nick_name() . " :$msg";
+        my $line = ":$sender PRIVMSG $irc->nick_name :$msg";
         push @{ $self->{recall} }, $line;
     }
-    
+
     return PCI_EAT_NONE;
 }
               
@@ -140,6 +141,22 @@ sub S_part {
 
     return PCI_EAT_NONE;
 }
+
+sub S_public {
+    my ($self, $irc) = splice @_, 0, 2;
+    my $sender       = ${ $_[0] };
+    my $chan         = ${ $_[1] }->[0];
+    my $msg          = ${ $_[2] };
+
+    # do this here instead rather than in S_raw so that IDENTIFY-MSG
+    # will by handled by POE::Filter::IRC::Compat
+    if ($self->{Mode} =~ /all|missed/) {
+        push @{ $self->{recall} }, ":$sender PRIVMSG $chan :$msg";
+    }
+
+    return;
+}
+    
 
 sub S_proxy_authed {
     my ($self, $irc) = splice @_, 0, 2;
@@ -176,11 +193,7 @@ sub S_raw {
     }
     
     if ($self->{Mode} =~ /all|missed/) {
-        if ($input->{command} eq 'PRIVMSG' && $input->{params}->[0] =~ /^[#&+!]/) {
-            # channel messages
-            push @{ $self->{recall} }, $raw_line;
-        }
-        elsif ($input->{command} eq 'MODE' && $input->{params}->[0] =~ /^[#&+!]/) {
+        if ($input->{command} eq 'MODE' && $input->{params}->[0] =~ /^[#&+!]/) {
             # channel mode changes
             push @{ $self->{recall} }, $raw_line;
         }
@@ -264,7 +277,7 @@ sub recall {
     
     # any user modes in effect?
     if ($irc->umode()) {
-        push @lines, ":$irc->server_name MODE $irc->nick_name :+$irc->umode";
+        push @lines, ":$irc->server_name MODE $me :+$irc->umode";
     }
     
     push @lines, @{ $self->{recall} };
@@ -286,6 +299,8 @@ sub recall {
         $self->{recall} = [ ];
         push @lines, $self->_get_chaninfo();
     }
+
+    push @lines, ":$irc->server_name 290 $me :IDENTIFY-MSG" if $self->{idmsg};
     
     return @lines;
 }

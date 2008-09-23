@@ -98,7 +98,7 @@ sub _start {
     
     $self->_spawn_listener();
     $poe_kernel->sig(INT  => '_exit');
-#    $poe_kernel->sig(HUP  => '_reload');
+    #$poe_kernel->sig(HUP  => '_reload');
 
     return;
 }

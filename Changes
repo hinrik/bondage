@@ -1,4 +1,5 @@
 0.2.6
+    - Handle the CAPAB IDENTIFY-MSG feature smoothly
     - Make recall keep track of topic changes
     - Remove a debugging print statement, doh
     - Should detach from the terminal now

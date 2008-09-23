@@ -39,35 +39,24 @@ sub PCI_register {
     $irc->raw_events(1);
     $irc->plugin_register($self, 'SERVER', qw(raw));
     
-    $self->{session_id} = POE::Session->create(
+    POE::Session->create(
         object_states => [
             $self => [ qw(_start _client_error _client_input) ],
         ],
-    )->ID();
+    );
 
     return 1;
 }
 
 sub PCI_unregister {
     my ($self, $irc) = @_;
-    
-    $self->{irc}->send_event(irc_proxy_close => $self->{wheel}->ID());
-    
-    if (defined $self->{wheel}) {
-        $self->{wheel}->put('ERROR :Be gone now');
-        delete $self->{wheel};
-        close $self->{Socket};
-    }
-    
-    $poe_kernel->refcount_decrement($self->{session_id}, __PACKAGE__);
-    $DB::single=1;
+
+    $self->_close_wheel();
     return 1;
 }
 
 sub _start {
     my ($kernel, $self) = @_[KERNEL, OBJECT];
-    
-    $kernel->refcount_increment($self->{session_id}, __PACKAGE__);
 
     $self->{wheel} = POE::Wheel::ReadWrite->new(
         Handle       => $self->{Socket},
@@ -76,6 +65,8 @@ sub _start {
         InputEvent   => '_client_input',
         ErrorEvent   => '_client_error',
     );
+    delete $self->{Socket};
+    $self->{id} = $self->{wheel}->ID();
 
     my ($recall_plug) = grep { $_->isa('App::Bondage::Recall') } @{ $self->{irc}->pipeline->{PIPELINE} };
     $self->{wheel}->put($recall_plug->recall());
@@ -83,11 +74,23 @@ sub _start {
     return;
 }
 
+sub _close_wheel {
+    my ($self) = @_;
+    my $irc = $self->{irc};
+    return if !$self->{wheel};
+
+    $self->{wheel}->put('ERROR :Closing link');
+    delete $self->{wheel};
+    $irc->send_event(irc_proxy_close => $self->{id});
+    return;
+}
+
 sub _client_error {
     my ($self) = $_[OBJECT];
     my $irc = $self->{irc};
     
-    $irc->plugin_del($self) if grep { $_ == $self } values %{ $irc->plugin_list() };
+    $self->_close_wheel();
+    $irc->plugin_del($self);
     return;
 }
 
@@ -96,7 +99,8 @@ sub _client_input {
     my $irc = $self->{irc};
     
     if ($input->{command} eq 'QUIT') {
-        delete $self->{wheel};
+        $self->_close_wheel();
+        $irc->plugin_del($self);
         return;
     }
     elsif ($input->{command} eq 'PING') {

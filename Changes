@@ -1,3 +1,6 @@
+0.2.7
+    - Make recall keep track of topic changes
+
 0.2.6
     - Remove a debugging print statement, doh
     - Should detach from the terminal now

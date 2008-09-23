@@ -14,5 +14,10 @@ WriteMakefile(
         'POE::Component::IRC'         => '5.84',
         'POE::Filter::IRCD'           => '2.34',
         'Config::Any'                 => '0.11',
+        'File::Temp'                  => '0',
+        'Tie::File'                   => '0',
+        'Carp'                        => '0',
+        'Config'                      => '0',
+        'Digest::MD5'                 => '0',
     }
 );

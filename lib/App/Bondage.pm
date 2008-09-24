@@ -349,20 +349,22 @@ The following options are recognized in the configuration file which
 can be called F<~/.bondage/config.EXT> where EXT is an extension
 recognized by L<Config::Any|Config::Any>.
 
-=head2 C<listen_host>
+=head2 Global options
+
+=head3 C<listen_host>
 
 (optional, default: "0.0.0.0")
 
 The host that Bondage accepts connections from. This is the host you
 use to connect to Bondage.
 
-=head2 C<listen_port>
+=head3 C<listen_port>
 
 (required, no default)
 
 The port Bondage binds to.
 
-=head2 C<listen_ssl>
+=head3 C<listen_ssl>
 
 (optional, default: false)
 
@@ -371,17 +373,32 @@ for client connections.
 More information:
 http://www.akadia.com/services/ssh_test_certificate.html
 
-=head2 C<password>
+=head3 C<password>
 
 (required, no default)
 
 The password you use to connect to Bondage. If it is 32 characters,
 it is assumed to be encrypted (see L<C<bondage -c>|bondage/"SYNOPSIS">);
 
-B<Note:> The rest of the options are specific to the B<network>
-block they appear in.
+=head3 C<networks>
 
-=head2 C<bind_host>
+(required, no default)
+
+This should contain a list of network names, each pointing to a list of
+relevant options as described in the following section. Here's an
+example (in L<YAML|YAML> format):
+
+ networks:
+   freenode:
+     option1: value
+     option2: value
+   ircnet
+     option1: value
+     option2: value
+
+=head2 Network-specific options
+
+=head3 C<bind_host>
 
 (optional, default: "0.0.0.0")
 
@@ -389,32 +406,32 @@ The host that Bondage binds to and connects to IRC from.
 Useful if you have multiple IPs and want to choose which one
 to IRC from.
 
-=head2 C<server_host>
+=head3 C<server_host>
 
 (required, no default)
 
 The IRC server you want Bondage to connect to.
 
-=head2 C<server_port>
+=head3 C<server_port>
 
 (optional, default: 6667)
 
 The port on the IRC server you want to use.
 
-=head2 C<server_pass>
+=head3 C<server_pass>
 
 (optional, no default)
 
 The IRC server password, if there is one.
 
-=head2 C<use_ssl>
+=head3 C<use_ssl>
 
 (optional, default: false)
 
 Set this to true if you want to use SSL to communicate with
 the IRC server.
 
-=head2 C<nickserv_pass>
+=head3 C<nickserv_pass>
 
 (optional, no default)
 
@@ -422,25 +439,25 @@ Your NickServ password on the IRC network, if you have one.
 Bondage will identify with NickServ with this password on connect,
 and whenever you switch to your original nickname.
 
-=head2 C<nickname>
+=head3 C<nickname>
 
 (optional, default: your UNIX user name)
 
 Your IRC nick name.
 
-=head2 C<username>
+=head3 C<username>
 
 (optional, default: your UNIX user name)
 
 Your IRC user name.
 
-=head2 C<realname>
+=head3 C<realname>
 
 (optional, default: your UNIX real name, if any)
 
 Your IRC real name, or email, or whatever.
 
-=head2 C<channels>
+=head3 C<channels>
 
 (optional, no default)
 
@@ -452,7 +469,7 @@ Here's an example in L<YAML|YAML> format:
    "chan2" : "password"
    "chan3" : ""
 
-=head2 C<recall_mode>
+=head3 C<recall_mode>
 
 (optional, default: "missed")
 
@@ -469,7 +486,7 @@ the last time you detached from Bondage.
 B<Note>: Bondage will always recall private messages that you missed
 while you were away, regardless of this option.
 
-=head2 C<log_public>
+=head3 C<log_public>
 
 (optional, default: false)
 
@@ -477,7 +494,7 @@ Set to true if you want Bondage to log all your public messages.
 They will be saved as F<~/.bondage/logs/some_network/#some_channel.log>
 unless you set log_sortbydate to true.
 
-=head2 C<log_private>
+=head3 C<log_private>
 
 (optional, default: false)
 
@@ -485,7 +502,7 @@ Set to true if you want Bondage to log all private messages.
 They will be saved as F<~/.bondage/logs/some_network/some_nickname.log>
 unless you set log_sortbydate to true.
 
-=head2 C<log_sortbydate>
+=head3 C<log_sortbydate>
 
 (optional, default: false)
 
@@ -493,21 +510,21 @@ Set to true if you want Bondage to rotate your logs.
 E.g. a channel log file might look like
 F<~/.bondage/logs/some_network/#channel/2008-01-30.log>
 
-=head2 C<log_restricted>
+=head3 C<log_restricted>
 
 (optional, default: false)
 
 Set this to true if you want Bondage to restrict the read permissions
 on created log files/directories so other users won't be able to access them.
 
-=head2 C<cycle_empty>
+=head3 C<cycle_empty>
 
 (optional, default: false)
 
 Set to true if you want Bondage to cycle (part and rejoin)
 opless channels if they become empty.
 
-=head2 C<kick_rejoin>
+=head3 C<kick_rejoin>
 
 (optional, default: false)
 

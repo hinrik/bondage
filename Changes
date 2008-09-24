@@ -1,4 +1,7 @@
-0.3.0
+0.3.1
+    - More pod improvements
+
+0.3.0 Wed Sep 24 00:17:00 GMT 2008
     - Handle the CAPAB IDENTIFY-MSG feature smoothly
     - Make recall keep track of channel topic changes
     - Remove a debugging print statement, doh

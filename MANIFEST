@@ -3,7 +3,7 @@ MANIFEST
 INSTALL
 Changes
 example/config.yml
-bin/bondage
+script/bondage
 lib/App/Bondage.pm
 lib/App/Bondage/Away.pm
 lib/App/Bondage/Client.pm

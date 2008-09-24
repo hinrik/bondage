@@ -1,4 +1,4 @@
-0.3.1
+0.3.1 Wed Sep 24 19:06:09 GMT 2008
     - Fix bug in recall due to wrong string interpolation
     - More pod improvements
     - More sanity checks on the config file

@@ -30,10 +30,11 @@ sub PCI_register {
         $irc->plugin_add('BotTraffic', POE::Component::IRC::Plugin::BotTraffic->new());
     }
     
-    $self->{irc}     = $irc;
-    $self->{filter}  = POE::Filter::IRCD->new();
-    $self->{clients} = 0;
-    $self->{recall}  = [ ];
+    $self->{irc}         = $irc;
+    $self->{filter}      = POE::Filter::IRCD->new();
+    $self->{clients}     = 0;
+    $self->{recall}      = [ ];
+    $self->{last_detach} = 0;
     
     tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /all|missed/;
     
@@ -166,10 +167,14 @@ sub S_proxy_authed {
 sub S_proxy_close {
     my ($self, $irc) = splice @_, 0, 2;
     $self->{clients}--;
+    return if $self->{clients};
     
-    if ($self->{Mode} eq 'missed' && !$self->{clients}) {
+    if ($self->{Mode} eq 'missed') {
         $self->{recall} = [ ];
         push @{ $self->{recall} }, $self->_get_chaninfo();
+    }
+    elsif ($self->{Mode} eq 'all') {
+        $self->{last_detach} = $#{ $self->{recall} };
     }
     
     return PCI_EAT_NONE;
@@ -267,6 +272,7 @@ sub recall {
     my ($self) = @_;
     my $irc    = $self->{irc};
     my $me     = $irc->nick_name();
+    my $server = $irc->server_name();
     my @lines;
 
     for my $line (@{ $self->{stash} }) {
@@ -274,16 +280,13 @@ sub recall {
         push @lines, $line;
     }
     
-    # any user modes in effect?
-    if ($irc->umode()) {
-        push @lines, ':' . $irc->server_name() .  " MODE $me :" . $irc->umode();
-    }
-    
+    push @lines, ":$server MODE $me :" . $irc->umode() if $irc->umode();
+    push @lines, ":$server 290 $me :IDENTIFY-MSG" if $self->{idmsg};
     push @lines, @{ $self->{recall} };
 
-    if ($self->{Mode} eq 'all') {
-        # remove the old PMs, since we've seen 'em now
-        for my $line (0..$#{ $self->{recall} }) {
+    if ($self->{Mode} eq 'all' && $#{ $self->{recall} } > $self->{last_detach}) {
+        # remove all PMs received since we last detached
+        for my $line ($self->{last_detach} .. $#{ $self->{recall} }) {
             my $in = shift @{ $self->{filter}->get( $self->{recall} ) };
             if ($in->{command} eq 'PRIVMSG' && $in->{params}->[0] !~ /^[#&+!]/) {
                 delete $self->{recall}->[$line];
@@ -299,8 +302,6 @@ sub recall {
         push @lines, $self->_get_chaninfo();
     }
 
-    push @lines, ':' . $irc->server_name() . " 290 $me :IDENTIFY-MSG" if $self->{idmsg};
-    
     return @lines;
 }
 

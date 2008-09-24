@@ -7,6 +7,7 @@
     - Prettified some of the pod
     - Exit cleanly upon getting SIGINT when clients are attached
     - Fix bug in 99-test-pod.t
+    - Create the logs/ dir on demand
 
 0.2.5 Tue Mar 11 01:42:08 GMT 2008
     - Fix PM recalling

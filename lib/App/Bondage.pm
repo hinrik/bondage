@@ -9,6 +9,7 @@ use App::Bondage::Away;
 use App::Bondage::Client;
 use App::Bondage::Recall;
 use Digest::MD5 qw(md5_hex);
+use File::Spec;
 use POE qw(Filter::Line Filter::Stackable Wheel::ReadWrite Wheel::SocketFactory);
 use POE::Filter::IRCD;
 use POE::Component::Client::DNS;
@@ -67,7 +68,9 @@ sub _start {
             Raw          => 1,
         );
         
-        $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new( Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE" ));
+        $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new(
+                Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE"
+        ));
         $irc->plugin_add('Cycle',       POE::Component::IRC::Plugin::CycleEmpty->new()) if $network->{cycle_empty};
         $irc->plugin_add('NickReclaim', POE::Component::IRC::Plugin::NickReclaim->new());
         $irc->plugin_add('Connector',   POE::Component::IRC::Plugin::Connector->new( Delay => 120 ));
@@ -81,8 +84,13 @@ sub _start {
         }
         
         if ($network->{log_public} || $network->{log_private}) {
+            my $log_dir = File::Spec->catdir($self->{Work_dir}, 'logs');
+            if (! -d $log_dir) {
+                mkdir $log_dir or die "Cannot create directory $log_dir; $!; aborted";
+            }
+
             $irc->plugin_add('Logger', POE::Component::IRC::Plugin::Logger->new(
-                                           Path         => "$self->{Work_dir}/logs/$network_name",
+                                           Path         => File::Spec->catdir($log_dir, $network_name),
                                            Private      => $network->{log_private},
                                            Public       => $network->{log_public},
                                            Sort_by_date => $network->{log_sortbydate},

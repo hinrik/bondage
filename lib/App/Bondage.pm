@@ -101,7 +101,7 @@ sub _start {
         $irc->plugin_add('Away',   App::Bondage::Away->new( Message => $network->{away_msg}));
         $irc->plugin_add('Recall', App::Bondage::Recall->new( Mode => $network->{recall_mode} ));
 
-        $irc->yield(connect => { });
+        $irc->yield('connect');
     }
     
     $self->_spawn_listener();

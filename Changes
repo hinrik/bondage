@@ -1,4 +1,4 @@
-0.3.2 
+0.3.2 Wed Sep 24 20:10:19 GMT 2008
     - Fix race condition related to CAPAB IDENTIFY-MSG
     - Use less CPU while attaching when recall mode is 'all'
 

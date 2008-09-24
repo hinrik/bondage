@@ -1,6 +1,6 @@
 0.3.2 
     - Fix race condition related to CAPAB IDENTIFY-MSG
-    - Use less CPU when attaching when recall mode is 'all'
+    - Use less CPU while attaching when recall mode is 'all'
 
 0.3.1 Wed Sep 24 19:06:09 GMT 2008
     - Fix bug in recall due to wrong string interpolation

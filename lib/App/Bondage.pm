@@ -23,7 +23,7 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 
-our $VERSION    = '0.3.0';
+our $VERSION    = '0.3.1';
 our $HOMEPAGE   = 'http://search.cpan.org/perldoc?App::Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
@@ -196,7 +196,7 @@ sub _spawn_listener {
 }
 
 sub _load_config {
-    my $self = shift;
+    my ($self) = @_;
 
     my $cfg = Config::Any->load_files( {
         use_ext => 1,
@@ -204,9 +204,23 @@ sub _load_config {
     } );
     $self->{config} = ((values %{$cfg->[0]})[0]);
 
+
+    # some sanity checks
+
     for my $opt (qw(listen_port password)) {
         if (!defined $self->{config}->{$opt}) {
             die "Config option '$opt' must be defined; aborted\n";
+        }
+    }
+
+    if (ref $self->{config}->{networks} ne 'HASH'
+            || !keys %{ $self->{config}->{networks} }) {
+        die "No networks defined; aborted\n";
+    }
+
+    while (my ($network, $options) = each %{ $self->{config}->{networks} }) {
+        if (!defined $options->{server_host}) {
+            die "No server_host defined for network '$network'; aborted\n";
         }
     }
     

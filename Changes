@@ -1,5 +1,7 @@
 0.3.1
+    - Fix bug in recall due to wrong string interpolation
     - More pod improvements
+    - More sanity checks on the config file
 
 0.3.0 Wed Sep 24 00:17:00 GMT 2008
     - Handle the CAPAB IDENTIFY-MSG feature smoothly

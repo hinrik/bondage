@@ -9,7 +9,7 @@ use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Filter::IRCD;
 use Tie::File;
 
-our $VERSION = '1.3';
+our $VERSION = '1.4';
 
 sub new {
     my ($package, %self) = @_;
@@ -276,7 +276,7 @@ sub recall {
     
     # any user modes in effect?
     if ($irc->umode()) {
-        push @lines, ":$irc->server_name MODE $me :+$irc->umode";
+        push @lines, ':' . $irc->server_name() .  " MODE $me :" . $irc->umode();
     }
     
     push @lines, @{ $self->{recall} };
@@ -299,7 +299,7 @@ sub recall {
         push @lines, $self->_get_chaninfo();
     }
 
-    push @lines, ":$irc->server_name 290 $me :IDENTIFY-MSG" if $self->{idmsg};
+    push @lines, ':' . $irc->server_name() . " 290 $me :IDENTIFY-MSG" if $self->{idmsg};
     
     return @lines;
 }

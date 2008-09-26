@@ -7,7 +7,7 @@ use POE qw(Filter::Line Filter::Stackable);
 use POE::Component::IRC::Plugin qw( :ALL );
 use POE::Filter::IRCD;
 
-our $VERSION = '1.1';
+our $VERSION = '1.2';
 
 sub new {
     my ($package, %self) = @_;
@@ -81,8 +81,8 @@ sub _client_error {
     my $irc = $self->{irc};
     
     if ($self->{wheel}) {
-        $self->{wheel}->put('ERROR :Closing link (Caught interrupt)');
-        $self->{wheel}->flush();
+        #$self->{wheel}->put('ERROR :Closing link (Caught interrupt)'); 
+        #$self->{wheel}->flush();
         delete $self->{wheel};
         $irc->send_event(irc_proxy_close => $self->{wheel_id});
         $kernel->alias_remove("$self");

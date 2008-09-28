@@ -81,6 +81,7 @@ sub _client_error {
     my $irc = $self->{irc};
     
     if ($self->{wheel}) {
+        # causes deep recursion somehow
         #$self->{wheel}->put('ERROR :Closing link (Caught interrupt)'); 
         #$self->{wheel}->flush();
         delete $self->{wheel};

@@ -73,8 +73,7 @@ __END__
 =head1 NAME
 
 App::Bondage::Away - A PoCo-IRC plugin which changes the away status
-based on the presence of proxy clients, by listening for
-C<irc_proxy_authed> and C<irc_proxy_close> events.
+based on the presence of proxy clients.
 
 =head1 SYNOPSIS
 

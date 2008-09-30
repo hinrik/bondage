@@ -275,7 +275,7 @@ __END__
 =head1 NAME
 
 App::Bondage::Recall - A PoCo-IRC plugin which can greet proxy clients
-with the messages they missed while they were away, among other things.
+with the messages they missed while they were away.
 
 =head1 SYNOPSIS
 

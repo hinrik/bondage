@@ -31,7 +31,9 @@ sub S_001 {
     $self->{syncing_away} = { };
     $self->{syncing_op}   = { };
     $self->{syncing_join} = { };
-    $self->{queue}        = { };
+    $self->{op_queue}     = { };
+    $self->{join_queue}   = { };
+
     return PCI_EAT_NONE;
 }
 
@@ -91,8 +93,9 @@ sub S_chan_sync {
     my ($self, $irc) = splice @_, 0, 2;
     my $mapping = $irc->isupport('CASEMAPPING');
     my $uchan = u_irc(${ $_[0] }, $mapping);
+    
     delete $self->{syncing_join}->{$uchan};
-    $self->_flush_queue($uchan);
+    $self->_flush_queue($self->{join_queue}->{$uchan});
     return PCI_EAT_NONE;
 }
 
@@ -101,6 +104,7 @@ sub S_chan_sync_invex {
     my $mapping = $irc->isupport('CASEMAPPING');
     my $uchan = u_irc(${ $_[0] }, $mapping);
 
+    $self->_flush_queue($self->{op_queue}->{$uchan}->{invex});
     delete $self->{syncing_op}->{$uchan}->{invex};
     delete $self->{syncing_op}->{$uchan} if !keys %{ $self->{syncing_op}->{$uchan} };
     return PCI_EAT_NONE;
@@ -110,6 +114,7 @@ sub S_chan_sync_excepts {
     my $mapping = $irc->isupport('CASEMAPPING');
     my $uchan = u_irc(${ $_[0] }, $mapping);
 
+    $self->_flush_queue($self->{op_queue}->{$uchan}->{excepts});
     delete $self->{syncing_op}->{$uchan}->{excepts};
     delete $self->{syncing_op}->{$uchan} if !keys %{ $self->{syncing_op}->{$uchan} };
     return PCI_EAT_NONE;
@@ -121,7 +126,7 @@ sub S_nick_sync {
     my $unick = u_irc(${ $_[0] }, $mapping);
     
     delete $self->{syncing_join}->{$unick};
-    $self->_flush_queue($unick);
+    $self->_flush_queue($self->{join_queue}->{$unick});
     return PCI_EAT_NONE;
 }
 
@@ -167,14 +172,14 @@ sub S_raw {
 }
 
 sub _flush_queue {
-    my ($self, $what) = @_;
-    return if !$self->{queue}->{$what};
+    my ($self, $queue) = @_;
+    return if !$queue;
 
-    for my $request (@{ $self->{queue}->{$what} }) {
+    for my $request (@$queue) {
         my ($callback, $reply, $real_what, $args) = @{ $request };
-        $callback->($self->$reply($real_what, @{ $args }));
+        $callback->($_) for $self->$reply($real_what, @{ $args });
     }
-    delete $self->{queue}->{$what};
+    @$queue = undef;
 }
 
 sub enqueue {
@@ -182,12 +187,28 @@ sub enqueue {
     my $mapping = $self->{irc}->isupport('CASEMAPPING');
     my $uwhat = u_irc($what, $mapping);
 
-    if ($self->{syncing_join}->{$uwhat}) {
-        push @{ $self->{queue}->{$uwhat} }, [$callback, $reply, $what, \@args];
+    if ($reply eq 'mode_reply') {
+        if (grep { defined && $_ eq 'e' } @args && $self->{syncing_op}->{$uwhat}->{excepts}) {
+            push @{ $self->{op_queue}->{$uwhat}->{excepts} }, [$callback, $reply, $what, \@args];
+            return;
+        }
+        elsif (grep { defined && $_ eq 'I' } @args && $self->{syncing_op}->{$uwhat}->{invex}) {
+            push @{ $self->{op_queue}->{$uwhat}->{invex} }, [$callback, $reply, $what, \@args];
+            return;
+        }
+        elsif ($self->{syncing_join}->{$uwhat}) {
+            push @{ $self->{join_queue}->{$uwhat} }, [$callback, $reply, $what, \@args];
+            return;
+        }
     }
-    else {
-        $callback->( $self->$reply($what, @args) );
+    elsif ($reply =~ /(?:who|names|topic)_reply/) {
+        if ($self->{syncing_join}->{$uwhat}) {
+            push @{ $self->{join_queue}->{$uwhat} }, [$callback, $reply, $what, \@args];
+            return;
+        }
     }
+
+    $callback->($_) for $self->$reply($what, @args);
 }
 
 # handles /^TOPIC (\S+)$/ where $1 is a channel that we're on

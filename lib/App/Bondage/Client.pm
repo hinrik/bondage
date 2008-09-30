@@ -135,7 +135,7 @@ sub _client_input {
             my $mapping = $irc->isupport('CASEMAPPING');
             if (u_irc($input->{params}->[0], $mapping) eq u_irc($irc->nick_name(), $mapping)) {
                 if (!$input->{params}->[1]) {
-                    $self->put($state->mode_reply($input->params->[0]));
+                    $self->put($state->mode_reply($input->{params}->[0]));
                     return;
                 }
             }

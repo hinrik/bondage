@@ -8,5 +8,6 @@ lib/App/Bondage.pm
 lib/App/Bondage/Away.pm
 lib/App/Bondage/Client.pm
 lib/App/Bondage/Recall.pm
+lib/App/Bondage/State.pm
 t/00-compile.t
 t/99-test-pod.t

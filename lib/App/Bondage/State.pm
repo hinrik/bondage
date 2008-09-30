@@ -47,7 +47,7 @@ sub S_join {
         $self->{syncing_join}->{$uchan} = 1;
     }
     else {
-        $self->{syncing_join}->{$unick} = 1;
+        $self->{syncing_join}->{$unick}++;
     }
 
     return PCI_EAT_NONE;
@@ -77,9 +77,9 @@ sub S_chan_mode {
     my $uchan    = u_irc(${ $_[1] }, $mapping);
     my $mode     = ${ $_[2] };
     my $unick    = u_irc($irc->nick_name(), $mapping);
-
+    
     if ($mode =~ /\+o/) {
-        my @operands = split //, ${ $_[3] };
+        my @operands = split / /, ${ $_[3] };
         if (grep { u_irc($_, $mapping) eq $unick } @operands) {
             $self->{syncing_op}->{$uchan}->{invex} = 1;
             $self->{syncing_op}->{$uchan}->{excepts} = 1;
@@ -109,6 +109,7 @@ sub S_chan_sync_invex {
     delete $self->{syncing_op}->{$uchan} if !keys %{ $self->{syncing_op}->{$uchan} };
     return PCI_EAT_NONE;
 }
+
 sub S_chan_sync_excepts {
     my ($self, $irc) = splice @_, 0, 2;
     my $mapping = $irc->isupport('CASEMAPPING');
@@ -125,7 +126,8 @@ sub S_nick_sync {
     my $mapping = $irc->isupport('CASEMAPPING');
     my $unick = u_irc(${ $_[0] }, $mapping);
     
-    delete $self->{syncing_join}->{$unick};
+    $self->{syncing_join}->{$unick}--;
+    delete $self->{syncing_join}->{$unick} if $self->{syncing_join}->{$unick} == 0;
     $self->_flush_queue($self->{join_queue}->{$unick});
     return PCI_EAT_NONE;
 }

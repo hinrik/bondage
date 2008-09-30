@@ -8,6 +8,7 @@ use Config::Any;
 use App::Bondage::Away;
 use App::Bondage::Client;
 use App::Bondage::Recall;
+use App::Bondage::State;
 use Digest::MD5 qw(md5_hex);
 use File::Spec;
 use POE qw(Filter::Line Filter::Stackable Wheel::ReadWrite Wheel::SocketFactory);
@@ -23,7 +24,7 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 
-our $VERSION    = '0.3.3';
+our $VERSION    = '0.3.4';
 our $HOMEPAGE   = 'http://search.cpan.org/perldoc?App::Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
@@ -98,6 +99,7 @@ sub _start {
             ));
         }
 
+        $irc->plugin_add('State',  App::Bondage::State->new());
         $irc->plugin_add('Away',   App::Bondage::Away->new( Message => $network->{away_msg}));
         $irc->plugin_add('Recall', App::Bondage::Recall->new( Mode => $network->{recall_mode} ));
 

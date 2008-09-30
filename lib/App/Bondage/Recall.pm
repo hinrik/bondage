@@ -9,7 +9,7 @@ use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Filter::IRCD;
 use Tie::File;
 
-our $VERSION = '1.4';
+our $VERSION = '1.5';
 
 sub new {
     my ($package, %self) = @_;
@@ -26,14 +26,15 @@ sub PCI_register {
         die __PACKAGE__ . " requires PoCo::IRC::State or a subclass thereof\n";
     }
     
-    if (!grep { $_->isa('POE::Component::IRC::Plugin::BotTraffic') } @{ $irc->pipeline->{PIPELINE} }) {
+    if (!grep { $_->isa('POE::Component::IRC::Plugin::BotTraffic') } values %{ $irc->plugin_list() }) {
         $irc->plugin_add('BotTraffic', POE::Component::IRC::Plugin::BotTraffic->new());
     }
-    
+
+    ($self->{state})     = grep { $_->isa('App::Bondage::State') } values %{ $irc->plugin_list() };
     $self->{irc}         = $irc;
     $self->{filter}      = POE::Filter::IRCD->new();
-    $self->{clients}     = 0;
     $self->{recall}      = [ ];
+    $self->{clients}     = 0;
     $self->{last_detach} = 0;
     
     tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /all|missed/;
@@ -107,11 +108,10 @@ sub S_msg {
     my $sender       = ${ $_[0] };
     my $msg          = ${ $_[2] };
     
-    if (!$self->{clients}) {
-        my $line = ":$sender PRIVMSG $irc->nick_name :$msg";
-        push @{ $self->{recall} }, $line;
-    }
-
+    return PCI_EAT_NONE if $self->{clients};
+    
+    my $line = ":$sender PRIVMSG $irc->nick_name :$msg";
+    push @{ $self->{recall} }, $line;
     return PCI_EAT_NONE;
 }
               
@@ -119,7 +119,7 @@ sub S_part {
     my ($self, $irc) = splice @_, 0, 2;
     my $chan         = ${ $_[1] };
 
-    if (my $cycle = grep { $_->isa('POE::Component::IRC::Plugin::CycleEmpty') } @{ $irc->pipeline->{PIPELINE} } ) {
+    if (my $cycle = grep { $_->isa('POE::Component::IRC::Plugin::CycleEmpty') } values %{ $irc->plugin_list() } ) {
         return PCI_EAT_NONE if $cycle->cycling($chan);
     }
 
@@ -171,7 +171,7 @@ sub S_proxy_close {
     
     if ($self->{Mode} eq 'missed') {
         $self->{recall} = [ ];
-        push @{ $self->{recall} }, $self->_get_chaninfo();
+        push @{ $self->{recall} }, $self->_chan_info();
     }
     elsif ($self->{Mode} eq 'all') {
         $self->{last_detach} = $#{ $self->{recall} };
@@ -216,53 +216,17 @@ sub S_raw {
 
 # returns everything that an IRC server would send us upon joining
 # the channels we're on
-sub _get_chaninfo {
+sub _chan_info {
     my ($self) = @_;
     my $irc    = $self->{irc};
+    my $state  = $self->{state};
     my $me     = $irc->nick_name();
-    my $server = $irc->server_name();
 
     my @info;
     for my $chan (keys %{ $irc->channels() }) {
-        push @info, ':' . $irc->nick_long_form($me) . " JOIN :$chan";        
-
-        if (keys %{ $irc->channel_topic($chan) }) {
-            my $topic_info = $irc->channel_topic($chan);
-            push @info, ":$server 332 $me $chan " . ':' . $topic_info->{Value};
-            push @info, ":$server 333 $me $chan " . $topic_info->{SetBy} . ' ' . $topic_info->{SetAt};
-        }
-        
-        my $modes = $irc->channel_modes($chan);
-        my $type = '=';
-        $type = '@' if $irc->is_channel_mode_set($chan, 's');
-        $type = '*' if $irc->is_channel_mode_set($chan, 'p');
-        my $length = length($server) + 3 + length($chan) + length($me) + 7;
-        my $buffer = '';
-        
-        my @nicks = map { 
-            my $nick = $_;
-            my $prefix = '';
-            $prefix = '@' if $irc->is_channel_operator($chan, $nick);
-            $prefix = '%' if $irc->is_channel_halfop($chan, $nick) && !$prefix;
-            $prefix = '+' if $irc->has_channel_voice($chan, $nick) && !$prefix;
-            $prefix . $nick;
-        } $irc->channel_list($chan);
-        
-        for my $nick (sort @nicks) {
-            if (length(join ' ', $buffer, $nick) + $length > 510) {
-                push @info, ":$server 353 $me $type $chan :$buffer";
-                $buffer = $nick;
-                next;
-            }
-            if ($buffer) {
-                $buffer = join ' ', $buffer, $nick;
-            }
-            else {
-                $buffer = $nick;
-            }
-        }
-        push @info, ":$server 353 $me $type $chan $buffer";
-        push @info, ":$server 366 $me $chan :End of /NAMES list.";
+        push @info, ':' . $irc->nick_long_form($me) . " JOIN :$chan";
+        push @info, $state->topic_reply($chan) if keys %{ $irc->channel_topic($chan) };
+        push @info, $state->names_reply($chan);
     }
 
     return @info;
@@ -295,11 +259,11 @@ sub recall {
     }
     elsif ($self->{Mode} eq 'missed') {
         $self->{recall} = [ ];
-        push @{ $self->{recall} }, $self->_get_chaninfo();
+        push @{ $self->{recall} }, $self->_chan_info();
     }
     elsif ($self->{Mode} eq 'none') {
         $self->{recall} = [ ];
-        push @lines, $self->_get_chaninfo();
+        push @lines, $self->_chan_info();
     }
 
     return @lines;

@@ -1,3 +1,7 @@
+0.4.0
+    - Don't forward PING/PONG server messages
+    - Generate various server replies without contacting the server
+
 0.3.3 Sun Sep 28 04:21:50 GMT 2008
     - Fixed crash on client disconnect
 

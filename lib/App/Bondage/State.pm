@@ -381,7 +381,7 @@ provided by L<POE::Component::IRC::State|POE::Component::IRC::State>.
 
  use App::Bondage::State;
 
- $irc->plugin_add('State', App::Bondage::Client->new());
+ $irc->plugin_add('State', App::Bondage::State->new());
 
 =head1 DESCRIPTION
 

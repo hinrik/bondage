@@ -1,3 +1,7 @@
+0.4.1 Tue Sep 30 19:23:43 GMT 2008
+    - Fixed a serious typo
+    - Some pod updates
+
 0.4.0 Tue Sep 30 17:00:29 GMT 2008
     - Don't forward PING/PONG server messages
     - Generate various server replies without contacting the server.

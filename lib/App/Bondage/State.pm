@@ -136,12 +136,19 @@ sub S_raw {
     my $raw_line = ${ $_[0] };
     my $input = $self->{filter}->get( [ $raw_line ] )->[0];
 
-    # syncing_join
+    # syncing_join me
     if ($input->{command} =~ /315|324|329|352|367|368/) {
         if ($input->{params}->[1] =~ /[^#&+!]/) {
             if ($self->{syncing_join}->{u_irc($input->{params}->[1], $mapping)}) {
                 return PCI_EAT_PLUGIN;
             }
+        }
+    }
+
+    # syncing_join other
+    if ($input->{command} eq '352') {
+        if ($self->{syncing_join}->{u_irc($input->{params}->[5], $mapping)}) {
+            return PCI_EAT_PLUGIN;
         }
     }
 
@@ -156,14 +163,14 @@ sub S_raw {
     
     # syncing_op invex
     if ($input->{command} =~ /346|347/) {
-        if ($self->{syncing_op}->{invex}->{u_irc($input->{params}->[1], $mapping)}) {
+        if ($self->{syncing_op}->{u_irc($input->{params}->[1], $mapping)}->{invex}) {
             return PCI_EAT_PLUGIN;
         }
     }
     
     # syncing_op excepts
     if ($input->{command} =~ /348|349/) {
-        if ($self->{syncing_op}->{excepts}->{u_irc($input->{params}->[1], $mapping)}) {
+        if ($self->{syncing_op}->{u_irc($input->{params}->[1], $mapping)}->{excepts}) {
             return PCI_EAT_PLUGIN;
         }
     }

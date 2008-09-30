@@ -190,8 +190,8 @@ sub _spawn_listener {
     if ($self->{config}->{listen_ssl}) {
         require POE::Component::SSLify;
         POE::Component::SSLify->import(qw(Server_SSLify SSLify_Options));
-        eval { SSLify_Options('bondage.key', 'bondage.crt') };
-        croak "Unable to load SSL key ($self->{Work_dir}/bondage.key) or certificate ($self->{Work_dir}/bondage.crt): $!; aborted" if $@;
+        eval { SSLify_Options('ssl.key', 'ssl.crt') };
+        croak "Unable to load SSL key ($self->{Work_dir}/ssl.key) or certificate ($self->{Work_dir}/ssl.crt): $!; aborted" if $@;
         eval { $self->{listener} = Server_SSLify($self->{listener}) };
         croak "Unable to SSLify the listener: $@; aborted" if $@;
     }
@@ -386,9 +386,9 @@ The port Bondage binds to.
 (optional, default: false)
 
 Set this to true if you want Bondage to require the use of SSL
-for client connections.
-More information:
-http://www.akadia.com/services/ssh_test_certificate.html
+for client connections. You'll need to have F<ssl.crt> and F<ssl.key>
+files in Bondage's working directory. More information:
+L<http://www.akadia.com/services/ssh_test_certificate.html>
 
 =head3 C<password>
 

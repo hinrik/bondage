@@ -74,12 +74,14 @@ sub S_chan_mode {
     my $mapping  = $irc->isupport('CASEMAPPING');
     my $uchan    = u_irc(${ $_[1] }, $mapping);
     my $mode     = ${ $_[2] };
-    my @operands = split //, ${ $_[3] };
     my $unick    = u_irc($irc->nick_name(), $mapping);
 
-    if ($mode =~ /\+o/ && grep { u_irc($_, $mapping) eq $unick } @operands) {
-        $self->{syncing_op}->{$uchan}->{invex} = 1;
-        $self->{syncing_op}->{$uchan}->{excepts} = 1;
+    if ($mode =~ /\+o/) {
+        my @operands = split //, ${ $_[3] };
+        if (grep { u_irc($_, $mapping) eq $unick } @operands) {
+            $self->{syncing_op}->{$uchan}->{invex} = 1;
+            $self->{syncing_op}->{$uchan}->{excepts} = 1;
+        }
     }
 
     return PCI_EAT_NONE;

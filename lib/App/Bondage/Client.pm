@@ -123,8 +123,10 @@ sub _client_input {
     elsif ($input->{command} eq 'WHO') {
         if ($input->{params}->[0] && $input->{params}->[0] !~ tr/*//) {
             if (!$input->{params}->[1]) {
-                $state->enqueue(sub { $self->put($_[0]) }, 'who_reply', $input->{params}->[0]);
-                return;
+                if ($input->{params}->[0] !~ /^[#&+!]/ || $irc->channel_list($input->{params}->[0])) {
+                    $state->enqueue(sub { $self->put($_[0]) }, 'who_reply', $input->{params}->[0]);
+                    return;
+                }
             }
         }
     }
@@ -137,7 +139,7 @@ sub _client_input {
                     return;
                 }
             }
-            elsif ($input->{params}->[0] =~ /^[#&+!]/) {
+            elsif ($input->{params}->[0] =~ /^[#&+!]/ && $irc->channel_list($input->{params}->[0])) {
                 if (!$input->{params}->[1] || $input->{params}->[1] =~ /^[eIb]$/) {
                     $state->enqueue(sub { $self->put($_[0]) }, 'mode_reply', @{ $input->{params} }[0,1]);
                     return;

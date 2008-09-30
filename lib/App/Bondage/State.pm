@@ -9,8 +9,8 @@ use POE::Component::IRC::Plugin qw(:ALL);
 our $VERSION = '1.0';
 
 sub new {
-    my ($package, %args) = @_;
-    return bless \%args, $package;
+    my ($package) = @_;
+    return bless { }, $package;
 }
 
 sub PCI_register {
@@ -280,7 +280,7 @@ sub names_reply {
     return @results;
 }
 
-# handles /^WHO (\S+)$/ where $1 is a channel or a nickname, NOT a mask
+# handles /^WHO (\S+)$/ where $1 is a channel we're on or a nickname, NOT a mask
 sub who_reply {
     my ($self, $who) = @_;
     my $irc     = $self->{irc};
@@ -379,46 +379,82 @@ provided by L<POE::Component::IRC::State|POE::Component::IRC::State>.
 
 =head1 SYNOPSIS
 
- use App::Bondage::Client;
+ use App::Bondage::State;
 
- $irc->plugin_add('Client_1', App::Bondage::Client->new( Socket => $socket ));
+ $irc->plugin_add('State', App::Bondage::Client->new());
 
 =head1 DESCRIPTION
 
-App::Bondage::Client is a L<POE::Component::IRC|POE::Component::IRC> plugin.
-It handles a input/output and disconnects from a proxy client.
+App::Bondage::State is a L<POE::Component::IRC|POE::Component::IRC> plugin.
+Its purpose is to cache information so that less trips to the IRC server
+will be made. The methods are only useful for a subset of the use cases
+that their corresponding commands are capable of, mostly because there are
+certain cases that only the actual IRC server can handle. However, the
+methods can handle all the automatic queries that modern IRC clients make,
+so it does the job.
+
+Another thing this plugin does is hide from clients all server replies
+elicited by L<POE::Component::IRC::State|POE::Component::IRC::State>'s
+information gathering.
 
 This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
 or a subclass thereof.
 
 =head1 CONSTRUCTOR
 
-=over
+=head2 C<new>
 
-=item C<new>
-
-One argument:
-
-'Socket', the socket of the proxy client.
+Takes no arguments.
 
 Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
 C<plugin_add()> method.
 
-=back
-
 =head1 METHODS
 
-=over
-
-=item C<put>
+=head2 C<topic_reply>
 
 One argument:
 
-An IRC protocol line
+An IRC channel which the IRC component is on
 
-Sends an IRC protocol line to the client
+Returns IRC protocol line responses to the C<TOPIC> command.
 
-=back
+=head2 C<names_reply>
+
+One argument:
+
+An IRC channel which the IRC component is on
+
+Returns IRC protocol line responses to the C<NAMES> command.
+
+=head2 C<who_reply>
+
+One argument:
+
+An IRC channel which the IRC component is on, or a known nickname
+
+Returns IRC protocol line responses to the C<WHO> command.
+
+=head2 C<names_reply>
+
+One or two arguments:
+
+The IRC component's nickname, or a channel which the component is on
+and an optional mode type
+
+Returns IRC protocol line responses to the C<MODE> command.
+
+=head2 C<enqueue>
+
+In case a client asks for information about a channel while it is being
+synced, it should call this method, and the information will be provided
+as soon as it has been gathered.
+
+Takes three arguments:
+
+A code reference which will be called for every line of response generated,
+the type of reply being asked for (e.g. 'who_reply'), and the arguments
+to the corresponding method.
 
 =head1 AUTHOR
 

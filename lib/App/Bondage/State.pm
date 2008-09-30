@@ -386,11 +386,12 @@ provided by L<POE::Component::IRC::State|POE::Component::IRC::State>.
 =head1 DESCRIPTION
 
 App::Bondage::State is a L<POE::Component::IRC|POE::Component::IRC> plugin.
-Its purpose is to cache information so that less trips to the IRC server
-will be made. The methods are only useful for a subset of the use cases
-that their corresponding commands are capable of, mostly because there are
-certain cases that only the actual IRC server can handle. However, the
-methods can handle all the automatic queries that modern IRC clients make,
+Its role is to use L<POE::Component::IRC::State|POE::Component::IRC::State>'s
+information as a cache so that fewer trips will be to the IRC server when
+clients submit queries. The methods here are only useful for a subset of the
+use cases that their corresponding commands are capable of, mostly because
+there are certain cases that only the actual IRC server can handle. However,
+the methods can handle all the automatic queries that modern IRC clients make,
 so it does the job.
 
 Another thing this plugin does is hide from clients all server replies

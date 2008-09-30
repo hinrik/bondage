@@ -28,8 +28,9 @@ sub PCI_register {
     if (!grep { $_->isa('App::Bondage::Recall') } values %{ $irc->plugin_list() } ) {
         die __PACKAGE__ . " requires App::Bondage::Recall\n";
     }
-    
-    $self->{filter} = POE::Filter::Stackable->new(
+   
+    $self->{filter} = POE::Filter::IRCD->new(); 
+    $self->{stacked} = POE::Filter::Stackable->new(
         Filters => [
             POE::Filter::Line->new(),
             POE::Filter::IRCD->new(),
@@ -64,7 +65,7 @@ sub _start {
 
     $self->{wheel} = POE::Wheel::ReadWrite->new(
         Handle       => $self->{Socket},
-        InputFilter  => $self->{filter},
+        InputFilter  => $self->{stacked},
         OutputFilter => POE::Filter::Line->new(),
         InputEvent   => '_client_input',
         ErrorEvent   => '_client_error',
@@ -122,7 +123,7 @@ sub _client_input {
     elsif ($input->{command} eq 'WHO') {
         if ($input->{params}->[0] && $input->{params}->[0] !~ tr/*//) {
             if (!$input->{params}->[1]) {
-                $state->enqueue($self, 'who_reply', $input->{params}->[0]);
+                $state->enqueue(sub { $self->put($_[0]) }, 'who_reply', $input->{params}->[0]);
                 return;
             }
         }
@@ -138,7 +139,7 @@ sub _client_input {
             }
             elsif ($input->{params}->[0] =~ /^[#&+!]/) {
                 if (!$input->{params}->[1] || $input->{params}->[1] =~ /^[eIb]$/) {
-                    $state->enqueue($self, 'mode_reply', @{ $input->{params} }[0,1]);
+                    $state->enqueue(sub { $self->put($_[0]) }, 'mode_reply', @{ $input->{params} }[0,1]);
                     return;
                 }
             }
@@ -146,13 +147,13 @@ sub _client_input {
     }
     elsif ($input->{command} eq 'NAMES') {
         if ($irc->channel_list($input->{params}->[0]) && !$input->{params}->[1]) {
-            $state->enqueue($self, 'names_reply', $input->{params}->[0]);
+            $state->enqueue(sub { $self->put($_[0]) }, 'names_reply', $input->{params}->[0]);
             return;
         }
     }
     elsif ($input->{command} eq 'TOPIC') {
         if ($irc->channel_list($input->{params}->[0]) && !$input->{params}->[1]) {
-            $state->enqueue($self, 'topic_reply', $input->{params}->[0]);
+            $state->enqueue(sub { $self->put($_[0]) }, 'topic_reply', $input->{params}->[0]);
             return;
         }
     }
@@ -165,11 +166,10 @@ sub _client_input {
 sub S_raw {
     my ($self, $irc) = splice @_, 0, 2;
     my $raw_line = ${ $_[0] };
-    
-    return if !defined $self->{wheel};
-    return if $raw_line =~ /^(?:PING|PONG)/;
-    $self->{wheel}->put($raw_line);
-    
+    return PCI_EAT_NONE if !defined $self->{wheel};
+
+    my $input = $self->{filter}->get( [ $raw_line ] )->[0]; 
+    $self->{wheel}->put($raw_line) if $input->{command} !~ /^(?:PING|PONG)/;
     return PCI_EAT_NONE;
 }
 

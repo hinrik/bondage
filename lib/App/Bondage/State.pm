@@ -2,25 +2,22 @@ package App::Bondage::State;
 
 use strict;
 use warnings;
+use POE::Filter::IRCD;
 use POE::Component::IRC::Common qw(parse_user u_irc);
-use POE::Component::IRC::Plugin qw(PCI_EAT_NONE);
-
-require Exporter;
-use base qw( Exporter );
-our @EXPORT_OK = qw(topic_reply names_reply who_reply mode_reply);
-our %EXPORT_TAGS = ( ALL => [@EXPORT_OK] );
+use POE::Component::IRC::Plugin qw(:ALL);
 
 our $VERSION = '1.0';
 
 sub new {
-    my ($package, %args) = @_;
-    return bless \%args, $package;
+    my ($package) = @_;
+    return bless { }, $package;
 }
 
 sub PCI_register {
     my ($self, $irc) = @_;
     $self->{irc} = $irc;
-    $irc->plugin_register($self, SERVER => qw(001 join chan_sync nick_sync));
+    $self->{filter} = POE::Filter::IRCD->new();
+    $irc->plugin_register($self, SERVER => qw(001 away_sync_start away_sync_end join chan_mode chan_sync chan_sync_invex chan_sync_excepts nick_sync raw));
     return 1;
 }
 
@@ -31,8 +28,10 @@ sub PCI_unregister {
 
 sub S_001 {
     my ($self, $irc) = splice @_, 0, 2;
-    $self->{syncing}    = { };
-    $self->{queue} = { };
+    $self->{syncing_away} = { };
+    $self->{syncing_op}   = { };
+    $self->{syncing_join} = { };
+    $self->{queue}        = { };
     return PCI_EAT_NONE;
 }
 
@@ -43,10 +42,44 @@ sub S_join {
     my $uchan = u_irc(${ $_[1] }, $mapping);
     
     if ($unick eq u_irc($irc->nick_name(), $mapping)) {
-        $self->{syncing}->{$uchan} = 1;
+        $self->{syncing_join}->{$uchan} = 1;
     }
     else {
-        $self->{syncing}->{$unick} = 1;
+        $self->{syncing_join}->{$unick} = 1;
+    }
+
+    return PCI_EAT_NONE;
+}
+
+sub S_away_sync_start {
+    my ($self, $irc) = splice @_, 0, 2;
+    my $mapping = $irc->isupport('CASEMAPPING');
+    my $uchan = u_irc(${ $_[0] }, $mapping);
+
+    $self->{syncing_away}->{$uchan} = 1;
+    return PCI_EAT_NONE;
+}
+
+sub S_away_sync_end {
+    my ($self, $irc) = splice @_, 0, 2;
+    my $mapping = $irc->isupport('CASEMAPPING');
+    my $uchan = u_irc(${ $_[0] }, $mapping);
+
+    delete $self->{syncing_away}->{$uchan};
+    return PCI_EAT_NONE;
+}
+
+sub S_chan_mode {
+    my ($self, $irc) = splice @_, 0, 2;
+    my $mapping  = $irc->isupport('CASEMAPPING');
+    my $uchan    = u_irc(${ $_[1] }, $mapping);
+    my $mode     = ${ $_[2] };
+    my @operands = split //, ${ $_[3] };
+    my $unick    = u_irc($irc->nick_name(), $mapping);
+
+    if ($mode =~ /\+o/ && grep { u_irc($_, $mapping) eq $unick } @operands) {
+        $self->{syncing_op}->{$uchan}->{invex} = 1;
+        $self->{syncing_op}->{$uchan}->{excepts} = 1;
     }
 
     return PCI_EAT_NONE;
@@ -56,8 +89,27 @@ sub S_chan_sync {
     my ($self, $irc) = splice @_, 0, 2;
     my $mapping = $irc->isupport('CASEMAPPING');
     my $uchan = u_irc(${ $_[0] }, $mapping);
-    delete $self->{syncing}->{$uchan};
+    delete $self->{syncing_join}->{$uchan};
     $self->_flush_queue($uchan);
+    return PCI_EAT_NONE;
+}
+
+sub S_chan_sync_invex {
+    my ($self, $irc) = splice @_, 0, 2;
+    my $mapping = $irc->isupport('CASEMAPPING');
+    my $uchan = u_irc(${ $_[0] }, $mapping);
+
+    delete $self->{syncing_op}->{$uchan}->{invex};
+    delete $self->{syncing_op}->{$uchan} if !keys %{ $self->{syncing_op}->{$uchan} };
+    return PCI_EAT_NONE;
+}
+sub S_chan_sync_excepts {
+    my ($self, $irc) = splice @_, 0, 2;
+    my $mapping = $irc->isupport('CASEMAPPING');
+    my $uchan = u_irc(${ $_[0] }, $mapping);
+
+    delete $self->{syncing_op}->{$uchan}->{excepts};
+    delete $self->{syncing_op}->{$uchan} if !keys %{ $self->{syncing_op}->{$uchan} };
     return PCI_EAT_NONE;
 }
 
@@ -65,8 +117,50 @@ sub S_nick_sync {
     my ($self, $irc) = splice @_, 0, 2;
     my $mapping = $irc->isupport('CASEMAPPING');
     my $unick = u_irc(${ $_[0] }, $mapping);
-    delete $self->{syncing}->{$unick};
+    
+    delete $self->{syncing_join}->{$unick};
     $self->_flush_queue($unick);
+    return PCI_EAT_NONE;
+}
+
+sub S_raw {
+    my ($self, $irc) = splice @_, 0, 2;
+    my $mapping = $irc->isupport('CASEMAPPING');
+    my $raw_line = ${ $_[0] };
+    my $input = $self->{filter}->get( [ $raw_line ] )->[0];
+
+    # syncing_join
+    if ($input->{command} =~ /315|324|329|352|367|368/) {
+        if ($input->{params}->[1] =~ /[^#&+!]/) {
+            if ($self->{syncing_join}->{u_irc($input->{params}->[1], $mapping)}) {
+                return PCI_EAT_PLUGIN;
+            }
+        }
+    }
+
+    # syncing_away
+    if ($input->{command} =~ /315|352/) {
+        if ($input->{params}->[1] =~ /[^#&+!]/) {
+            if ($self->{syncing_away}->{u_irc($input->{params}->[1], $mapping)}) {
+                return PCI_EAT_PLUGIN;
+            }
+        }
+    }
+    
+    # syncing_op invex
+    if ($input->{command} =~ /346|347/) {
+        if ($self->{syncing_op}->{invex}->{u_irc($input->{params}->[1], $mapping)}) {
+            return PCI_EAT_PLUGIN;
+        }
+    }
+    
+    # syncing_op excepts
+    if ($input->{command} =~ /348|349/) {
+        if ($self->{syncing_op}->{excepts}->{u_irc($input->{params}->[1], $mapping)}) {
+            return PCI_EAT_PLUGIN;
+        }
+    }
+
     return PCI_EAT_NONE;
 }
 
@@ -75,30 +169,22 @@ sub _flush_queue {
     return if !$self->{queue}->{$what};
 
     for my $request (@{ $self->{queue}->{$what} }) {
-        my ($client, $reply, $args) = @{ $request };
-        $self->$reply($client, $what, @{ $args });
+        my ($callback, $reply, $real_what, $args) = @{ $request };
+        $callback->($self->$reply($real_what, @{ $args }));
     }
     delete $self->{queue}->{$what};
 }
 
-sub _syncing {
-    my ($self, $what) = @_;
+sub enqueue {
+    my ($self, $callback, $reply, $what, @args) = @_;
     my $mapping = $self->{irc}->isupport('CASEMAPPING');
     my $uwhat = u_irc($what, $mapping);
 
-    return 1 if $self->{syncing}->{$uwhat};
-    return;
-}
-
-sub enqueue {
-    my ($self, $client, $reply, $what, @args) = @_;
-    my $mapping = $self->{irc}->isupport('CASEMAPPING');
-
-    if ($self->_syncing($what)) {
-        push @{ $self->{queue}->{u_irc($what, $mapping)} }, [$client, $reply, \@args];
+    if ($self->{syncing_join}->{$uwhat}) {
+        push @{ $self->{queue}->{$uwhat} }, [$callback, $reply, $what, \@args];
     }
     else {
-        $client->put( $self->$reply($what) );
+        $callback->( $self->$reply($what, @args) );
     }
 }
 

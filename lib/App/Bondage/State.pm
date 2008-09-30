@@ -9,8 +9,8 @@ use POE::Component::IRC::Plugin qw(:ALL);
 our $VERSION = '1.0';
 
 sub new {
-    my ($package) = @_;
-    return bless { }, $package;
+    my ($package, %args) = @_;
+    return bless \%args, $package;
 }
 
 sub PCI_register {

@@ -607,10 +607,6 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
 
 DCC send forwarding support.
 
-Answer common client requests like WHO/MODE without asking the server,
-so other clients won't be bothered with unnecessary traffic. Look into
-irssi's command redirection feature.
-
 Reload the configuration file upon being sent a SIGHUP.
 
 Add proper tests.

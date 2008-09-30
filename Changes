@@ -21,7 +21,7 @@
     - Handle the CAPAB IDENTIFY-MSG feature smoothly
     - Make recall keep track of channel topic changes
     - Remove a debugging print statement, doh
-    - Should detach from the terminal now when using --debug
+    - Should detach from the terminal now when not using --debug
     - Moved 'bondage' from bin/ to script/ since it's not a binary
     - Prettified some of the pod
     - Exit cleanly upon getting SIGINT when clients are attached

@@ -605,9 +605,7 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
 
 =head1 TODO
 
-DCC send forwarding support.
-
-Reload the configuration file upon being sent a SIGHUP.
+Generate QuakeNet-specific WHO replies without contacting the IRC server.
 
 Add proper tests.
 

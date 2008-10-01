@@ -201,13 +201,13 @@ sub S_raw {
             # channel mode changes
             push @{ $self->{recall} }, $raw_line;
         }
-        elsif ($input->{command} =~ /JOIN|KICK|PART|QUIT|NICK|TOPIC|353|366/) {
+        elsif ($input->{command} =~ /JOIN|KICK|PART|QUIT|NICK|TOPIC/) {
             # other channel-related things
             push @{ $self->{recall} }, $raw_line;
         }
-        elsif ($input->{command} =~ /332|333/) {
-            # only log topic stuff if we were just joining the channel
-            push @{ $self->{recall} }, $raw_line if !$irc->channel_list($input->{params}->[0]);
+        elsif ($input->{command} =~ /332|333|353|366/) {
+            # only log these when we've just joined the channel
+            push @{ $self->{recall} }, $raw_line if $self->{state}->is_syncing($input->{params}->[0]);
         }
     }
         

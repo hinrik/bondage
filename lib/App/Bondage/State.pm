@@ -191,6 +191,15 @@ sub _flush_queue {
     @$queue = undef;
 }
 
+sub is_syncing {
+    my ($self, $what) = @_;
+    my $mapping = $self->{irc}->isupport('CASEMAPPING');
+    my $uwhat = u_irc($what, $mapping);
+
+    return 1 if $self->{syncing_join}->{$uwhat};
+    return;
+}
+
 sub enqueue {
     my ($self, $callback, $reply, $what, @args) = @_;
     my $mapping = $self->{irc}->isupport('CASEMAPPING');
@@ -456,6 +465,14 @@ Takes three arguments:
 A code reference which will be called for every line of response generated,
 the type of reply being asked for (e.g. 'who_reply'), and the arguments
 to the corresponding method.
+
+=head2 C<is_syncing>
+
+Takes one argument:
+
+An IRC channel.
+
+Returns 1 if the channel or nick is being synced, 0 otherwise.
 
 =head1 AUTHOR
 

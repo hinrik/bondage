@@ -122,7 +122,7 @@ sub _client_input {
     }
     elsif ($input->{command} eq 'WHO') {
         if ($input->{params}->[0] && $input->{params}->[0] !~ tr/*//) {
-            if (!$input->{params}->[1]) {
+            if (!defined $input->{params}->[1]) {
                 if ($input->{params}->[0] !~ /^[#&+!]/ || $irc->channel_list($input->{params}->[0])) {
                     $state->enqueue(sub { $self->put($_[0]) }, 'who_reply', $input->{params}->[0]);
                     return;
@@ -134,13 +134,13 @@ sub _client_input {
         if ($input->{params}->[0]) {
             my $mapping = $irc->isupport('CASEMAPPING');
             if (u_irc($input->{params}->[0], $mapping) eq u_irc($irc->nick_name(), $mapping)) {
-                if (!$input->{params}->[1]) {
+                if (!defined $input->{params}->[1]) {
                     $self->put($state->mode_reply($input->{params}->[0]));
                     return;
                 }
             }
             elsif ($input->{params}->[0] =~ /^[#&+!]/ && $irc->channel_list($input->{params}->[0])) {
-                if (!$input->{params}->[1] || $input->{params}->[1] =~ /^[eIb]$/) {
+                if (!defined $input->{params}->[1] || $input->{params}->[1] =~ /^[eIb]$/) {
                     $state->enqueue(sub { $self->put($_[0]) }, 'mode_reply', @{ $input->{params} }[0,1]);
                     return;
                 }
@@ -148,13 +148,13 @@ sub _client_input {
         }
     }
     elsif ($input->{command} eq 'NAMES') {
-        if ($irc->channel_list($input->{params}->[0]) && !$input->{params}->[1]) {
+        if ($irc->channel_list($input->{params}->[0]) && !defined $input->{params}->[1]) {
             $state->enqueue(sub { $self->put($_[0]) }, 'names_reply', $input->{params}->[0]);
             return;
         }
     }
     elsif ($input->{command} eq 'TOPIC') {
-        if ($irc->channel_list($input->{params}->[0]) && !$input->{params}->[1]) {
+        if ($irc->channel_list($input->{params}->[0]) && !defined $input->{params}->[1]) {
             $state->enqueue(sub { $self->put($_[0]) }, 'topic_reply', $input->{params}->[0]);
             return;
         }

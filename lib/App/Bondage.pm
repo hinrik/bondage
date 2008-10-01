@@ -71,18 +71,20 @@ sub _start {
         );
         
         $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new(
-                Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE"
+            Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE"
         ));
         $irc->plugin_add('Cycle',       POE::Component::IRC::Plugin::CycleEmpty->new()) if $network->{cycle_empty};
         $irc->plugin_add('NickReclaim', POE::Component::IRC::Plugin::NickReclaim->new());
         $irc->plugin_add('Connector',   POE::Component::IRC::Plugin::Connector->new( Delay => 120 ));
         $irc->plugin_add('AutoJoin',    POE::Component::IRC::Plugin::AutoJoin->new(
-                                            Channels => $network->{channels},
-                                            RejoinOnKick => $network->{kick_rejoin} ));
+            Channels => $network->{channels},
+            RejoinOnKick => $network->{kick_rejoin},
+        ));
         
         if (defined $network->{nickserv_pass}) {
             $irc->plugin_add('NickServID', POE::Component::IRC::Plugin::NickServID->new(
-                                            Password => $network->{nickserv_pass}, ));
+                Password => $network->{nickserv_pass}
+            ));
         }
         
         if ($network->{log_public} || $network->{log_private}) {
@@ -92,24 +94,27 @@ sub _start {
             }
 
             $irc->plugin_add('Logger', POE::Component::IRC::Plugin::Logger->new(
-                                           Path         => File::Spec->catdir($log_dir, $network_name),
-                                           Private      => $network->{log_private},
-                                           Public       => $network->{log_public},
-                                           Sort_by_date => $network->{log_sortbydate},
-                                           Restricted   => $network->{log_restricted},
+                Path         => File::Spec->catdir($log_dir, $network_name),
+                Private      => $network->{log_private},
+                Public       => $network->{log_public},
+                Sort_by_date => $network->{log_sortbydate},
+                Restricted   => $network->{log_restricted},
             ));
         }
 
         $irc->plugin_add('State',  App::Bondage::State->new());
-        $irc->plugin_add('Away',   App::Bondage::Away->new( Message => $network->{away_msg}) );
-        $irc->plugin_add('Recall', App::Bondage::Recall->new( Mode => $network->{recall_mode} ));
+        $irc->plugin_add('Away',   App::Bondage::Away->new(
+                Message => $network->{away_msg}
+        ));
+        $irc->plugin_add('Recall', App::Bondage::Recall->new(
+                Mode => $network->{recall_mode}
+        ));
 
         $irc->yield('connect');
     }
     
     $self->_spawn_listener();
     $poe_kernel->sig(INT  => '_exit');
-    #$poe_kernel->sig(HUP  => '_reload');
 
     return;
 }
@@ -190,8 +195,10 @@ sub _spawn_listener {
     if ($self->{config}->{listen_ssl}) {
         require POE::Component::SSLify;
         POE::Component::SSLify->import(qw(Server_SSLify SSLify_Options));
+        
         eval { SSLify_Options('ssl.key', 'ssl.crt') };
         croak "Unable to load SSL key ($self->{Work_dir}/ssl.key) or certificate ($self->{Work_dir}/ssl.crt): $!; aborted" if $@;
+        
         eval { $self->{listener} = Server_SSLify($self->{listener}) };
         croak "Unable to SSLify the listener: $@; aborted" if $@;
     }
@@ -230,20 +237,10 @@ sub _load_config {
     return;
 }
 
-# reload the config file
-#sub _reload {
-#    my $self = shift;
-#    my $old_config = $self->{config};
-#    $self->_load_config();
-#    
-#    # TODO: check for new/removed networks
-#    
-#    $poe_kernel->sig_handled();
-#}
-
 # die gracefully
 sub _exit {
     my ($kernel, $self) = @_[KERNEL, OBJECT];
+    
     if (defined $self->{listener}) {
         delete $self->{wheels};
         delete $self->{listener};

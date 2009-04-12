@@ -292,10 +292,6 @@ with the messages they missed while they were away.
 
 =head1 DESCRIPTION
 
-App::Bondage::Recall is a L<POE::Component::IRC|POE::Component::IRC> plugin.
-It uses on Log::Log4perl to log messages and CTCP ACTIONs to either
-F<#some_channel.log> or F<some_nickname.log> in the supplied path.
-
 This plugin requires the IRC component to be
 L<POE::Component::IRC::State|POE::Component::IRC::State> or a subclass thereof.
 It also requires a

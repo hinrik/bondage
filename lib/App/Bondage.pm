@@ -602,6 +602,11 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=App%3A%3ABondage
 
 =head1 TODO
 
+Look into using L<POE::Component::Server::IRC|POE::Component::Server::IRC> as
+an intermediary for multiple clients.
+
+Keep recall messages away from prying eyes, instead of in F</tmp>.
+
 Generate QuakeNet-specific WHO replies without contacting the IRC server.
 
 Add proper tests.

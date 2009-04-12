@@ -23,7 +23,7 @@ $poe_kernel->run();
 sub encrypt_pass {
     print "Password:";
     system('stty -echo');
-    chomp (my $password = <STDIN>);
+    chomp (my $password = <>);
     system('stty echo');
     print "\nEncrypted password: " . md5_hex($password, $App::Bondage::CRYPT_SALT) . "\n";
     exit;

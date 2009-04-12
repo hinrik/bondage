@@ -79,15 +79,16 @@ based on the presence of proxy clients.
 
  use App::Bondage::Away;
 
- $irc->plugin_add( 'Away', App::Bondage::Away->new( Message => "I'm out to lunch" ));
+ $irc->plugin_add('Away', App::Bondage::Away->new(Message => "I'm out to lunch"));
 
 =head1 DESCRIPTION
 
 App::Bondage::Away is a L<POE::Component::IRC|POE::Component::IRC> plugin.
-When the last proxy client detaches, it changes the status to away, with the supplied away message.
+When the last proxy client detaches, it changes the status to away, with
+the supplied away message.
 
-This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
-or a subclass thereof.
+This plugin requires the IRC component to be
+L<POE::Component::IRC::State|POE::Component::IRC::State> or a subclass thereof.
 
 =head1 METHODS
 
@@ -95,10 +96,11 @@ or a subclass thereof.
 
 One optional argument:
 
-'Message', the away message you want to use. Defaults to 'No clients attached'
+B<'Message'>, the away message you want to use. Defaults to 'No clients
+attached'.
 
-Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
-C<plugin_add()> method.
+Returns a plugin object suitable for feeding to
+L<POE::Component::IRC|POE::Component::IRC>'s C<plugin_add()> method.
 
 =head2 C<message>
 
@@ -106,7 +108,8 @@ One optional argument:
 
 An away message
 
-Changes the away message when called with an argument, returns the current away message otherwise.
+Changes the away message when called with an argument, returns the current
+away message otherwise.
 
 =head1 AUTHOR
 

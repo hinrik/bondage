@@ -105,7 +105,7 @@ sub _client_input {
         return;
     }
     elsif ($input->{command} eq 'PING') {
-        $self->{wheel}->put('PONG ' . $input->{params}->[0] || '');
+        $self->{wheel}->put('PONG ' . $input->{params}[0] || '');
         return;
     }
     elsif ($input->{command} eq 'PRIVMSG') {
@@ -121,26 +121,26 @@ sub _client_input {
         }
     }
     elsif ($input->{command} eq 'WHO') {
-        if ($input->{params}->[0] && $input->{params}->[0] !~ tr/*//) {
-            if (!defined $input->{params}->[1]) {
-                if ($input->{params}->[0] !~ /^[#&+!]/ || $irc->channel_list($input->{params}->[0])) {
-                    $state->enqueue(sub { $self->put($_[0]) }, 'who_reply', $input->{params}->[0]);
+        if ($input->{params}[0] && $input->{params}[0] !~ tr/*//) {
+            if (!defined $input->{params}[1]) {
+                if ($input->{params}[0] !~ /^[#&+!]/ || $irc->channel_list($input->{params}[0])) {
+                    $state->enqueue(sub { $self->put($_[0]) }, 'who_reply', $input->{params}[0]);
                     return;
                 }
             }
         }
     }
     elsif ($input->{command} eq 'MODE') {
-        if ($input->{params}->[0]) {
+        if ($input->{params}[0]) {
             my $mapping = $irc->isupport('CASEMAPPING');
-            if (u_irc($input->{params}->[0], $mapping) eq u_irc($irc->nick_name(), $mapping)) {
-                if (!defined $input->{params}->[1]) {
-                    $self->put($state->mode_reply($input->{params}->[0]));
+            if (u_irc($input->{params}[0], $mapping) eq u_irc($irc->nick_name(), $mapping)) {
+                if (!defined $input->{params}[1]) {
+                    $self->put($state->mode_reply($input->{params}[0]));
                     return;
                 }
             }
-            elsif ($input->{params}->[0] =~ /^[#&+!]/ && $irc->channel_list($input->{params}->[0])) {
-                if (!defined $input->{params}->[1] || $input->{params}->[1] =~ /^[eIb]$/) {
+            elsif ($input->{params}[0] =~ /^[#&+!]/ && $irc->channel_list($input->{params}[0])) {
+                if (!defined $input->{params}[1] || $input->{params}[1] =~ /^[eIb]$/) {
                     $state->enqueue(sub { $self->put($_[0]) }, 'mode_reply', @{ $input->{params} }[0,1]);
                     return;
                 }
@@ -148,14 +148,14 @@ sub _client_input {
         }
     }
     elsif ($input->{command} eq 'NAMES') {
-        if ($irc->channel_list($input->{params}->[0]) && !defined $input->{params}->[1]) {
-            $state->enqueue(sub { $self->put($_[0]) }, 'names_reply', $input->{params}->[0]);
+        if ($irc->channel_list($input->{params}[0]) && !defined $input->{params}[1]) {
+            $state->enqueue(sub { $self->put($_[0]) }, 'names_reply', $input->{params}[0]);
             return;
         }
     }
     elsif ($input->{command} eq 'TOPIC') {
-        if ($irc->channel_list($input->{params}->[0]) && !defined $input->{params}->[1]) {
-            $state->enqueue(sub { $self->put($_[0]) }, 'topic_reply', $input->{params}->[0]);
+        if ($irc->channel_list($input->{params}[0]) && !defined $input->{params}[1]) {
+            $state->enqueue(sub { $self->put($_[0]) }, 'topic_reply', $input->{params}[0]);
             return;
         }
     }
@@ -192,15 +192,15 @@ App::Bondage::Client - A PoCo-IRC plugin which handles a proxy client.
 
  use App::Bondage::Client;
 
- $irc->plugin_add('Client_1', App::Bondage::Client->new( Socket => $socket ));
+ $irc->plugin_add('Client_1', App::Bondage::Client->new(Socket => $socket));
 
 =head1 DESCRIPTION
 
 App::Bondage::Client is a L<POE::Component::IRC|POE::Component::IRC> plugin.
 It handles a input/output and disconnects from a proxy client.
 
-This plugin requires the IRC component to be L<POE::Component::IRC::State|POE::Component::IRC::State>
-or a subclass thereof.
+This plugin requires the IRC component to be
+L<POE::Component::IRC::State|POE::Component::IRC::State> or a subclass thereof.
 
 =head1 METHODS
 
@@ -208,10 +208,10 @@ or a subclass thereof.
 
 One argument:
 
-'Socket', the socket of the proxy client.
+B<'Socket'>, the socket of the proxy client.
 
-Returns a plugin object suitable for feeding to L<POE::Component::IRC|POE::Component::IRC>'s
-C<plugin_add()> method.
+Returns a plugin object suitable for feeding to
+L<POE::Component::IRC|POE::Component::IRC>'s C<plugin_add()> method.
 
 =head2 C<put>
 

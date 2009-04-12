@@ -52,8 +52,8 @@ sub _start {
         ]
     );
     
-    while (my ($network_name, $network) = each %{ $self->{config}->{networks} }) {
-        my $irc = $self->{ircs}->{$network_name} = POE::Component::IRC::State->spawn(
+    while (my ($network_name, $network) = each %{ $self->{config}{networks} }) {
+        my $irc = $self->{ircs}{$network_name} = POE::Component::IRC::State->spawn(
             LocalAddr    => $network->{bind_host},
             Server       => $network->{server_host},
             Port         => $network->{server_port},
@@ -67,7 +67,6 @@ sub _start {
             Resolver     => $self->{resolver},
             Debug        => $self->{Debug},
             plugin_debug => $self->{Debug},
-            Raw          => 1,
         );
         
         $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new(
@@ -121,38 +120,38 @@ sub _start {
 
 sub _client_error {
     my ($self, $id) = @_[OBJECT, ARG3];
-    delete $self->{wheels}->{$id};
+    delete $self->{wheels}{$id};
     return;
 }
 
 sub _client_input {
     my ($self, $input, $id) = @_[OBJECT, ARG0, ARG1];
-    my $info = $self->{wheels}->{$id};
+    my $info = $self->{wheels}{$id};
     
     if ($input->{command} =~ /(PASS)/) {
-        $info->{lc $1} = $input->{params}->[0];
+        $info->{lc $1} = $input->{params}[0];
     }
     elsif ($input->{command} =~ /(NICK|USER)/) {
-        $info->{lc $1} = $input->{params}->[0];
+        $info->{lc $1} = $input->{params}[0];
         $info->{registered}++;
     }
     
     if ($info->{registered} == 2) {
         AUTH: {
             last AUTH if !defined $info->{pass};
-            $info->{pass} = md5_hex($info->{pass}, $CRYPT_SALT) if length $self->{config}->{password} == 32;
-            last AUTH unless $info->{pass} eq $self->{config}->{password};
-            last AUTH unless my $irc = $self->{ircs}->{ $info->{nick} };
+            $info->{pass} = md5_hex($info->{pass}, $CRYPT_SALT) if length $self->{config}{password} == 32;
+            last AUTH unless $info->{pass} eq $self->{config}{password};
+            last AUTH unless my $irc = $self->{ircs}{ $info->{nick} };
             $info->{wheel}->put("$info->{nick} NICK :$irc->nick_name");
             $irc->plugin_add("Client_$id" => App::Bondage::Client->new( Socket => $info->{socket} ));
             $irc->_send_event(irc_proxy_authed => $id);
-            delete $self->{wheels}->{$id};
+            delete $self->{wheels}{$id};
             return;
         }
         
         # wrong password or nick (network), dump the client
         $info->{wheel}->put('ERROR :Closing Link: * [' . ( $info->{user} || 'unknown' ) . '@' . $info->{ip} . '] (Unauthorised connection)' );
-        delete $self->{wheels}->{$id};
+        delete $self->{wheels}{$id};
     }
     
     return;
@@ -169,10 +168,10 @@ sub _listener_accept {
     );
 
     my $id = $wheel->ID();
-    $self->{wheels}->{$id}->{wheel} = $wheel;
-    $self->{wheels}->{$id}->{ip} = inet_ntoa($peer_addr);
-    $self->{wheels}->{$id}->{registered} = 0;
-    $self->{wheels}->{$id}->{socket} = $socket;
+    $self->{wheels}{$id}{wheel} = $wheel;
+    $self->{wheels}{$id}{ip} = inet_ntoa($peer_addr);
+    $self->{wheels}{$id}{registered} = 0;
+    $self->{wheels}{$id}{socket} = $socket;
     
     return;
 }
@@ -185,22 +184,24 @@ sub _listener_failed {
 sub _spawn_listener {
     my ($self) = @_;
     $self->{listener} = POE::Wheel::SocketFactory->new(
-        BindAddress  => $self->{config}->{listen_host},
-        BindPort     => $self->{config}->{listen_port},
+        BindAddress  => $self->{config}{listen_host},
+        BindPort     => $self->{config}{listen_port},
         SuccessEvent => '_listener_accept',
         FailureEvent => '_listener_failed',
         Reuse        => 'yes',
     );
     
-    if ($self->{config}->{listen_ssl}) {
+    if ($self->{config}{listen_ssl}) {
         require POE::Component::SSLify;
         POE::Component::SSLify->import(qw(Server_SSLify SSLify_Options));
         
         eval { SSLify_Options('ssl.key', 'ssl.crt') };
-        croak "Unable to load SSL key ($self->{Work_dir}/ssl.key) or certificate ($self->{Work_dir}/ssl.crt): $!; aborted" if $@;
+        chomp $@;
+        die "Unable to load SSL key ($self->{Work_dir}/ssl.key) or certificate ($self->{Work_dir}/ssl.crt): $@\n" if $@;
         
         eval { $self->{listener} = Server_SSLify($self->{listener}) };
-        croak "Unable to SSLify the listener: $@; aborted" if $@;
+        chomp $@;
+        die "Unable to SSLify the listener: $@\n" if $@;
     }
     return;
 }
@@ -218,17 +219,17 @@ sub _load_config {
     # some sanity checks
 
     for my $opt (qw(listen_port password)) {
-        if (!defined $self->{config}->{$opt}) {
+        if (!defined $self->{config}{$opt}) {
             die "Config option '$opt' must be defined; aborted\n";
         }
     }
 
-    if (ref $self->{config}->{networks} ne 'HASH'
-            || !keys %{ $self->{config}->{networks} }) {
+    if (ref $self->{config}{networks} ne 'HASH'
+            || !keys %{ $self->{config}{networks} }) {
         die "No networks defined; aborted\n";
     }
 
-    while (my ($network, $options) = each %{ $self->{config}->{networks} }) {
+    while (my ($network, $options) = each %{ $self->{config}{networks} }) {
         if (!defined $options->{server_host}) {
             die "No server_host defined for network '$network'; aborted\n";
         }
@@ -268,48 +269,46 @@ App::Bondage - A featureful IRC bouncer based on POE::Component::IRC
 
 =head1 DESCRIPTION
 
-Bondage is an IRC bouncer. It acts as a proxy between multiple
-IRC servers and multiple IRC clients. It makes it easy to stay
-permanently connected to IRC. It is mostly made up of reusable
-components. Very little is made from scratch here. If it is,
-it will be made modular and reusable, probably as a 
-L<POE::Component::IRC|POE::Component::IRC> plugin. This keeps
-the code short and (hopefully) well tested by others.
+Bondage is an IRC bouncer. It acts as a proxy between multiple IRC servers and
+multiple IRC clients. It makes it easy to stay permanently connected to IRC.
+It is mostly made up of reusable components. Very little is made from scratch
+here. If it is, it will be made modular and reusable, probably as a 
+L<POE::Component::IRC|POE::Component::IRC> plugin. This keeps the code short
+and (hopefully) well tested by others.
 
 =head2 Rationale
 
-I wrote Bondage because no other IRC bouncer out there fit my needs.
-Either they were missing essential features, or they were implemented
-in an undesirable (if not buggy) way. I've tried to make Bondage
-stay out of your way and be as transparent as possible.
-It's supposed to be a proxy, after all.
+I wrote Bondage because no other IRC bouncer out there fit my needs. Either
+they were missing essential features, or they were implemented in an
+undesirable (if not buggy) way. I've tried to make Bondage stay out of your
+way and be as transparent as possible. It's supposed to be a proxy, after all.
 
 =head1 FEATURES
 
 =head2 Easy setup
 
-Bondage is easy to get up and running. In the configuration file,
-you just have to specify the port it will listen on, the password,
-and some IRC server(s) you want Bondage to connect to. Everything
-else has sensible defaults, though you might want to use a custom
-nickname and pick some channels to join on connect.
+Bondage is easy to get up and running. In the configuration file, you just
+have to specify the port it will listen on, the password, and some IRC
+server(s) you want Bondage to connect to. Everything else has sensible
+defaults, though you might want to use a custom nickname and pick some
+channels to join on connect.
 
 =head2 Logging
 
-Bondage can log both public and private messages for you.
-All log files are saved as UTF-8.
+Bondage can log both public and private messages for you. All log files
+are saved as UTF-8.
 
 =head2 Stays connected
 
-Bondage will reconnect to IRC when it gets disconnected or
-the IRC server stops responding.
+Bondage will reconnect to IRC when it gets disconnected or the IRC server
+stops responding.
 
 =head2 Recall messages
 
-Bondage can send you all the messages you missed since you detached,
-or it can send you all messages received since it connected to
-the IRC server, or neither. This feature is based on similar features
-found in miau, dircproxy, and ctrlproxy.
+Bondage can send you all the messages you missed since you detached, or it
+can send you all messages received since it connected to the IRC server, or
+neither. This feature is based on similar features found in miau,
+dircproxy, and ctrlproxy.
 
 =head2 Auto-away
 
@@ -317,13 +316,13 @@ Bondage will set your status to away when no clients are attached.
 
 =head2 Reclaim nickname
 
-Bondage will periodically try to change to your preferred nickname
-if it is taken.
+Bondage will periodically try to change to your preferred nickname if it is
+taken.
 
 =head2 Flood protection
 
-Bondage utilizes POE::Component::IRC's flood protection to ensure
-that you never flood yourself off the IRC server.
+Bondage utilizes POE::Component::IRC's flood protection to ensure that you
+never flood yourself off the IRC server.
 
 =head2 NickServ support
 
@@ -335,13 +334,13 @@ Bondage can try to rejoin a channel if you get kicked from it.
 
 =head2 Encrypted passwords
 
-Bondage supports encrypted passwords in its configuration file
-for added security.
+Bondage supports encrypted passwords in its configuration file for added
+security.
 
 =head2 SSL support
 
-You can connect to SSL-enabled IRC servers, and make Bondage require
-SSL for client connections.
+You can connect to SSL-enabled IRC servers, and make Bondage require SSL for
+client connections.
 
 =head2 IPv6 support
 
@@ -350,8 +349,8 @@ connections via IPv6.
 
 =head2 Cycles empty channels
 
-Bondage can cycle (part and rejoin) channels for you when they
-become empty in order to gain ops.
+Bondage can cycle (part and rejoin) channels for you when they become empty
+in order to gain ops.
 
 =head2 CTCP replies
 
@@ -359,18 +358,18 @@ Bondage will reply to CTCP VERSION requests when you are offline.
 
 =head1 CONFIGURATION
 
-The following options are recognized in the configuration file which
-can be called F<~/.bondage/config.EXT> where EXT is an extension
-recognized by L<Config::Any|Config::Any>.
+The following options are recognized in the configuration file which can be
+called F<~/.bondage/config.EXT> where EXT is an extension recognized by
+L<Config::Any|Config::Any>.
 
 =head2 Global options
 
 =head3 C<listen_host>
 
-(optional, default: "0.0.0.0")
+(optional, default: I<"0.0.0.0">)
 
-The host that Bondage accepts connections from. This is the host you
-use to connect to Bondage.
+The host that Bondage accepts connections from. This is the host you use to
+connect to Bondage.
 
 =head3 C<listen_port>
 
@@ -380,27 +379,27 @@ The port Bondage binds to.
 
 =head3 C<listen_ssl>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-Set this to true if you want Bondage to require the use of SSL
-for client connections. You'll need to have F<ssl.crt> and F<ssl.key>
-files in Bondage's working directory. More information:
+Set this to true if you want Bondage to require the use of SSL for client
+connections. You'll need to have F<ssl.crt> and F<ssl.key> files in Bondage's
+working directory. More information, see
 L<http://www.akadia.com/services/ssh_test_certificate.html>
 
 =head3 C<password>
 
 (required, no default)
 
-The password you use to connect to Bondage. If it is 32 characters,
-it is assumed to be encrypted (see L<C<bondage -c>|bondage/"SYNOPSIS">);
+The password you use to connect to Bondage. If it is 32 characters, it is
+assumed to be encrypted (see L<C<bondage -c>|bondage/"SYNOPSIS">);
 
 =head3 C<networks>
 
 (required, no default)
 
 This should contain a list of network names, each pointing to a list of
-relevant options as described in the following section. Here's an
-example (in L<YAML|YAML> format):
+relevant options as described in the following section. Here's an example
+(in L<YAML|YAML> format):
 
  networks:
    freenode:
@@ -414,11 +413,10 @@ example (in L<YAML|YAML> format):
 
 =head3 C<bind_host>
 
-(optional, default: "0.0.0.0")
+(optional, default: I<"0.0.0.0">)
 
-The host that Bondage binds to and connects to IRC from.
-Useful if you have multiple IPs and want to choose which one
-to IRC from.
+The host that Bondage binds to and connects to IRC from. Useful if you have
+multiple IPs and want to choose which one to IRC from.
 
 =head3 C<server_host>
 
@@ -428,7 +426,7 @@ The IRC server you want Bondage to connect to.
 
 =head3 C<server_port>
 
-(optional, default: 6667)
+(optional, default: I<6667>)
 
 The port on the IRC server you want to use.
 
@@ -440,18 +438,17 @@ The IRC server password, if there is one.
 
 =head3 C<use_ssl>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-Set this to true if you want to use SSL to communicate with
-the IRC server.
+Set this to true if you want to use SSL to communicate with the IRC server.
 
 =head3 C<nickserv_pass>
 
 (optional, no default)
 
-Your NickServ password on the IRC network, if you have one.
-Bondage will identify with NickServ with this password on connect,
-and whenever you switch to your original nickname.
+Your NickServ password on the IRC network, if you have one. Bondage will
+identify with NickServ with this password on connect, and whenever you switch
+to your original nickname.
 
 =head3 C<nickname>
 
@@ -475,8 +472,8 @@ Your IRC real name, or email, or whatever.
 
 (optional, no default)
 
-A list of all your channels and their passwords.
-Here's an example in L<YAML|YAML> format:
+A list of all your channels and their passwords. Here's an example in
+L<YAML|YAML> format:
 
  channels:
    "chan1" : ""
@@ -485,80 +482,78 @@ Here's an example in L<YAML|YAML> format:
 
 =head3 C<recall_mode>
 
-(optional, default: "missed")
+(optional, default: I<"missed">)
 
-How many channel messages you want Bondage to remember, and then send
-to you when you attach.
+How many channel messages you want Bondage to remember, and then send to you
+when you attach.
 
-"missed": Bondage will only recall the channel messages you missed since
+B<"missed">: Bondage will only recall the channel messages you missed since
 the last time you detached from Bondage.
 
-"none": Bondage will not recall any channel messages.
+B<"none">: Bondage will not recall any channel messages.
 
-"all": Bondage will recall all channel messages.
+B<"all">: Bondage will recall all channel messages.
 
-B<Note>: Bondage will always recall private messages that you missed
-while you were away, regardless of this option.
+B<Note>: Bondage will always recall private messages that you missed while you
+were away, regardless of this option.
 
 =head3 C<log_public>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-Set to true if you want Bondage to log all your public messages.
-They will be saved as F<~/.bondage/logs/some_network/#some_channel.log>
-unless you set log_sortbydate to true.
+Set to true if you want Bondage to log all your public messages. They will be
+saved as F<~/.bondage/logs/some_network/#some_channel.log> unless you set
+L<C<log_sortbydate>|/log_sortbydate> to true.
 
 =head3 C<log_private>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-Set to true if you want Bondage to log all private messages.
-They will be saved as F<~/.bondage/logs/some_network/some_nickname.log>
-unless you set log_sortbydate to true.
+Set to true if you want Bondage to log all private messages. They will be saved
+as F<~/.bondage/logs/some_network/some_nickname.log> unless you set
+L<C<log_sortbydate>|/log_sortbydate> to true.
 
 =head3 C<log_sortbydate>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-Set to true if you want Bondage to rotate your logs.
-E.g. a channel log file might look like
-F<~/.bondage/logs/some_network/#channel/2008-01-30.log>
+Set to true if you want Bondage to rotate your logs. E.g. a channel log file
+might look like F<~/.bondage/logs/some_network/#channel/2008-01-30.log>
 
 =head3 C<log_restricted>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-Set this to true if you want Bondage to restrict the read permissions
-on created log files/directories so other users won't be able to access them.
+Set this to true if you want Bondage to restrict the read permissions on
+created log files/directories so other users won't be able to access them.
 
 =head3 C<cycle_empty>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-Set to true if you want Bondage to cycle (part and rejoin)
-opless channels if they become empty.
+Set to true if you want Bondage to cycle (part and rejoin) opless channels
+if they become empty.
 
 =head3 C<kick_rejoin>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-Set to true if you want Bondage to try to rejoin a channel (once)
-if you get kicked from it.
+Set to true if you want Bondage to try to rejoin a channel (once) if you get
+kicked from it.
 
 =head3 C<away_poll>
 
-(optional, default: false)
+(optional, default: I<false>)
 
-The interval, in seconds, in which to update information on channel
-members' away status.
+The interval, in seconds, in which to update information on channel members'
+away status.
 
-Some IRC clients (e.g. xchat) periodically issue a C<WHO #channel> to
-update the away status of channel members. Since Bondage caches this
-information and replies to such requests without contacting the IRC
-server, clients like xchat will not get up-to-date information about
-the away status. On the other hand, this saves lots of traffic if you
-don't care about that functionality. But if you do make use of it, set
-this value to, say, 300 (which is what xchat uses).
+Some IRC clients (e.g. xchat) periodically issue a C<WHO #channel> to update
+the away status of channel members. Since Bondage caches this information and
+replies to such requests without contacting the IRC server, clients like xchat
+will not get up-to-date information about the away status. On the other hand,
+this saves lots of traffic if you don't care about that functionality. But if
+you do make use of it, set this value to, say, 300 (which is what xchat uses).
 
 =head1 METHODS
 
@@ -566,10 +561,10 @@ this value to, say, 300 (which is what xchat uses).
 
 Arguments:
 
-'Work_dir', the working directory for the bouncer. Should include the config
-file. This option is required.
+B<'Work_dir'>, the working directory for the bouncer. Should include the
+config file. This option is required.
 
-'Debug', set to 1 to enable debugging. Default is 0.
+B<'Debug'>, set to 1 to enable debugging. Default is 0.
 
 =head1 DEPENDENCIES
 
@@ -587,11 +582,11 @@ The following CPAN distributions are required:
 
 =item L<POE-Component-IRC|POE::Component::IRC>
 
-=item L<POE-Component-SSLify|POE::Component::IRC> (only if you need SSL support)
+=item L<POE-Component-SSLify|POE::Component::IRC> (if you need SSL support)
 
 =item L<POE-Filter-IRCD|POE::Filter::IRCD>
 
-=item L<Socket6|Socket6> (only if you need ipv6 support)
+=item L<Socket6|Socket6> (if you need ipv6 support)
 
 =back
 

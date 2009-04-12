@@ -184,11 +184,12 @@ sub _flush_queue {
     my ($self, $queue) = @_;
     return if !$queue;
 
-    for my $request (@$queue) {
+    while (my $request = shift @$queue) {
         my ($callback, $reply, $real_what, $args) = @{ $request };
         $callback->($_) for $self->$reply($real_what, @{ $args });
     }
-    @$queue = undef;
+
+    return;
 }
 
 sub is_syncing {

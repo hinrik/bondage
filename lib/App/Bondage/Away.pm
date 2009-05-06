@@ -20,7 +20,11 @@ sub PCI_register {
     
     $self->{Message} = 'No clients attached' unless defined $self->{Message};
     $self->{clients} = 0;
-    $self->{away} = $irc->is_away($irc->nick_name());
+
+    if ($irc->connected() && $irc->is_away($irc->nick_name())) {
+        $self->{away} = 1;
+    }
+
     $irc->plugin_register($self, 'SERVER', qw(001 proxy_authed proxy_close));
     return 1;
 }

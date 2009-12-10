@@ -4,13 +4,12 @@ use strict;
 use warnings;
 use Carp;
 use Config;
-use Config::Any;
 use App::Bondage::Away;
 use App::Bondage::Client;
 use App::Bondage::Recall;
 use App::Bondage::State;
 use Digest::MD5 qw(md5_hex);
-use File::Spec;
+use File::Spec::Functions qw(catdir catfile);
 use POE qw(Filter::Line Filter::Stackable Wheel::ReadWrite Wheel::SocketFactory);
 use POE::Filter::IRCD;
 use POE::Component::Client::DNS;
@@ -23,6 +22,7 @@ use POE::Component::IRC::Plugin::Logger;
 use POE::Component::IRC::Plugin::NickReclaim;
 use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
+use YAML::XS qw(LoadFile);
 
 our $VERSION    = '0.4.1';
 our $HOMEPAGE   = 'http://search.cpan.org/perldoc?App::Bondage';
@@ -87,13 +87,13 @@ sub _start {
         }
         
         if ($network->{log_public} || $network->{log_private}) {
-            my $log_dir = File::Spec->catdir($self->{Work_dir}, 'logs');
+            my $log_dir = catdir($self->{Work_dir}, 'logs');
             if (! -d $log_dir) {
                 mkdir $log_dir or die "Cannot create directory $log_dir; $!; aborted";
             }
 
             $irc->plugin_add('Logger', POE::Component::IRC::Plugin::Logger->new(
-                Path         => File::Spec->catdir($log_dir, $network_name),
+                Path         => catdir($log_dir, $network_name),
                 Private      => $network->{log_private},
                 Public       => $network->{log_public},
                 Sort_by_date => $network->{log_sortbydate},
@@ -213,7 +213,7 @@ sub _load_config {
         use_ext => 1,
         files   => [ glob("$self->{Work_dir}/config.*") ],
     } );
-    $self->{config} = ((values %{$cfg->[0]})[0]);
+    $self->{config} = LoadFile(catfile($self->{Work_dir}, 'config.yml'));
 
 
     # some sanity checks
@@ -358,9 +358,8 @@ Bondage will reply to CTCP VERSION requests when you are offline.
 
 =head1 CONFIGURATION
 
-The following options are recognized in the configuration file which can be
-called F<~/.bondage/config.EXT> where EXT is an extension recognized by
-L<Config::Any|Config::Any>.
+The following options are recognized in the configuration file which is
+called F<~/.bondage/config.yml>.
 
 =head2 Global options
 
@@ -398,8 +397,7 @@ assumed to be encrypted (see L<C<bondage -c>|bondage/"SYNOPSIS">);
 (required, no default)
 
 This should contain a list of network names, each pointing to a list of
-relevant options as described in the following section. Here's an example
-(in L<YAML|YAML> format):
+relevant options as described in the following section.
 
  networks:
    freenode:
@@ -472,8 +470,7 @@ Your IRC real name, or email, or whatever.
 
 (optional, no default)
 
-A list of all your channels and their passwords. Here's an example in
-L<YAML|YAML> format:
+A list of all your channels and their passwords.
 
  channels:
    "chan1" : ""
@@ -572,7 +569,7 @@ The following CPAN distributions are required:
 
 =over 
 
-=item L<Config-Any|Config::Any>
+=item L<YAML:XS|YAML::XS>
 
 =item L<POE|POE>
 

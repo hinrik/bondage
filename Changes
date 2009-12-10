@@ -1,6 +1,7 @@
 0.4.2
     - Spurious NAMES replies will not get into the recall buffer now
     - Migrated Makefile.PL over to Module::Install
+    - Use YAML::XS for configs instead of Config::Any
 
 0.4.1 Tue Sep 30 19:23:43 GMT 2008
     - Fixed a serious typo

@@ -19,5 +19,6 @@ requires       ('Config::Any'                 => '0.11');
 requires       ('Tie::File'                   => '0');
 requires       ('Digest::MD5'                 => '0');
 test_requires  ('Test::More'                  => '0');
+test_requires  ('Test::Script'                => '0');
 tests_recursive();
 WriteAll();

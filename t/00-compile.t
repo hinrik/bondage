@@ -1,7 +1,10 @@
 use strict;
 use warnings;
-use Test::More tests => 4;
+use File::Spec::Functions 'catfile';
+use Test::More tests => 5;
+use Test::Script;
 use_ok 'App::Bondage';
 use_ok 'App::Bondage::Away';
 use_ok 'App::Bondage::Client';
 use_ok 'App::Bondage::Recall';
+script_compiles_ok(catfile('script', 'bondage'));

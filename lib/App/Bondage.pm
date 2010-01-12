@@ -209,10 +209,6 @@ sub _spawn_listener {
 sub _load_config {
     my ($self) = @_;
 
-    my $cfg = Config::Any->load_files( {
-        use_ext => 1,
-        files   => [ glob("$self->{Work_dir}/config.*") ],
-    } );
     $self->{config} = LoadFile(catfile($self->{Work_dir}, 'config.yml'));
 
 

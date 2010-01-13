@@ -24,7 +24,7 @@ use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 use YAML::XS qw(LoadFile);
 
-our $VERSION    = '0.4.1';
+our $VERSION    = '0.4.2';
 our $HOMEPAGE   = 'http://search.cpan.org/perldoc?App::Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 

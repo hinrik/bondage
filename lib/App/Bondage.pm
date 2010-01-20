@@ -94,10 +94,12 @@ sub _start {
 
             $irc->plugin_add('Logger', POE::Component::IRC::Plugin::Logger->new(
                 Path         => catdir($log_dir, $network_name),
-                Private      => $network->{log_private},
-                Public       => $network->{log_public},
-                Sort_by_date => $network->{log_sortbydate},
-                Restricted   => $network->{log_restricted},
+                Private      => (defined $network->{log_private}    ? $network->{log_private}    : 0),
+                Public       => (defined $network->{log_public}     ? $network->{log_public}     : 0),
+                Sort_by_date => (defined $network->{log_sortbydate} ? $network->{log_sortbydate} : 0),
+                Restricted   => (defined $network->{log_restricted} ? $network->{log_restricted} : 0),
+                DCC          => (defined $network->{log_dcc}        ? $network->{log_dcc}        : 0),
+                Notices      => (defined $network->{log_notices}    ? $network->{log_notices}    : 0),
             ));
         }
 
@@ -519,6 +521,18 @@ might look like F<~/.bondage/logs/some_network/#channel/2008-01-30.log>
 
 Set this to true if you want Bondage to restrict the read permissions on
 created log files/directories so other users won't be able to access them.
+
+=head3 C<log_dcc>
+
+(optional, default: I<false>)
+
+Set this to true if you want Bondage to log DCC transactions.
+
+=head3 C<log_notices>
+
+(optional, default: I<false>)
+
+Set this to true if you want Bondage to log NOTICEs in addition to PRIVMSGs.
 
 =head3 C<cycle_empty>
 

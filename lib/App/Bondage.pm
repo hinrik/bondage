@@ -586,7 +586,7 @@ The following CPAN distributions are required:
 
 =over 
 
-=item L<YAML:XS|YAML::XS>
+=item L<YAML::XS|YAML::XS>
 
 =item L<POE|POE>
 

@@ -1,3 +1,6 @@
+0.4.4
+    - Allow disabling POE::Component::IRC's flood protection
+
 0.4.3 Wed Jan 20 03:00:24 GMT 2010
     - Add log_notices and log_dcc options
 

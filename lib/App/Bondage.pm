@@ -64,6 +64,7 @@ sub _start {
             Username     => $network->{username},
             Ircname      => $network->{realname},
             AwayPoll     => $network->{away_poll},
+            Flood        => $network->{flood},
             Resolver     => $self->{resolver},
             Debug        => $self->{Debug},
             plugin_debug => $self->{Debug},
@@ -463,6 +464,12 @@ Your IRC user name.
 (optional, default: your UNIX real name, if any)
 
 Your IRC real name, or email, or whatever.
+
+=head3 C<flood>
+
+(optional, default: I<false>)
+
+Set to a true value to allow flooding (disables flood protection).
 
 =head3 C<channels>
 

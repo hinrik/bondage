@@ -1,3 +1,7 @@
+0.4.5 Sun May  2 18:38:05 UTC 2010
+    - Set process name with Sys::Prctl if it's available. Unless we're
+      running on a perl which calls prctl() for us.
+
 0.4.4 Fri Mar 12 02:26:44 GMT 2010
     - Allow disabling POE::Component::IRC's flood protection
 

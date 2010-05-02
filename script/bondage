@@ -16,7 +16,18 @@ GetOptions(
     'w|workdir=s' => \(my $work_dir = "$ENV{HOME}/.bondage"),
 ) or pod2usage();
 
-$0 = "bondage" . ($ENV{USER} ? ": $ENV{USER}" : '');
+# Set process name
+{
+    my $name = "bondage" . ($ENV{USER} ? ": $ENV{USER}" : '');
+    $0 = $name;
+    if ($] < 5.013000 and $^O eq 'linux') {
+        local $@;
+        eval {
+            require Sys::Prctl;
+            Sys::Prctl::prctl_name($name);
+        };
+    }
+}
 
 my $bouncer = App::Bondage->new( Debug => $debug, Work_dir => $work_dir );
 POE::Component::Daemon->spawn( detach => 1, logfile => '/dev/null' ) unless $debug;

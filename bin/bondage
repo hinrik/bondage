@@ -49,6 +49,8 @@ sub encrypt_pass {
     exit;
 }
 
+=encoding utf8
+
 =head1 NAME
 
 bondage - A featureful easy-to-use IRC bouncer

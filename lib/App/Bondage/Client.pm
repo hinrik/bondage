@@ -180,7 +180,8 @@ sub put {
 }
 
 1;
-__END__
+
+=encoding utf8
 
 =head1 NAME
 

@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.4.6 Tue Aug 17 22:48:52 GMT 2010
     - Set process name with Sys::Prctl if it's available. Unless we're
       running on a perl which calls prctl() for us.
     - Use Dist::Zilla

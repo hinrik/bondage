@@ -1,7 +1,7 @@
 package App::Bondage::State;
 
 use strict;
-use warnings;
+use warnings; #FATAL => 'all';
 use POE::Filter::IRCD;
 use POE::Component::IRC::Common qw(parse_user u_irc);
 use POE::Component::IRC::Plugin qw(:ALL);

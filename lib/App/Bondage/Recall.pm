@@ -1,7 +1,7 @@
 package App::Bondage::Recall;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use File::Temp qw(tempfile);
 use POE::Component::IRC::Common qw( parse_user );
 use POE::Component::IRC::Plugin qw( :ALL );

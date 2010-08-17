@@ -2,6 +2,7 @@
     - Set process name with Sys::Prctl if it's available. Unless we're
       running on a perl which calls prctl() for us.
     - Use Dist::Zilla
+    - Make all warnings fatal
 
 0.4.4 Fri Mar 12 02:26:44 GMT 2010
     - Allow disabling POE::Component::IRC's flood protection

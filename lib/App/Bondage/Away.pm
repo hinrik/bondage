@@ -1,7 +1,7 @@
 package App::Bondage::Away;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use POE::Component::IRC::Plugin qw( :ALL );
 
 sub new {

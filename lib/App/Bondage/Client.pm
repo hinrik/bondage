@@ -1,7 +1,7 @@
 package App::Bondage::Client;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use Carp;
 use POE qw(Filter::Line Filter::Stackable);
 use POE::Component::IRC::Common qw( u_irc );

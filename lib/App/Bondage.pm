@@ -1,7 +1,7 @@
 package App::Bondage;
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use Carp;
 use Config;
 use App::Bondage::Away;

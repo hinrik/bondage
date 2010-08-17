@@ -9,8 +9,6 @@ use POE::Component::IRC::Plugin::BotTraffic;
 use POE::Filter::IRCD;
 use Tie::File;
 
-our $VERSION = '1.5';
-
 sub new {
     my ($package, %self) = @_;
     if (!$self{Mode} || $self{Mode} !~ /missed|all|none/) {

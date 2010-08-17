@@ -24,7 +24,6 @@ use POE::Component::IRC::Plugin::NickServID;
 use Socket qw(inet_ntoa);
 use YAML::XS qw(LoadFile);
 
-our $VERSION    = '0.4.4';
 our $HOMEPAGE   = 'http://search.cpan.org/perldoc?App::Bondage';
 our $CRYPT_SALT = 'erxpnUyerCerugbaNgfhW';
 
@@ -70,8 +69,15 @@ sub _start {
             plugin_debug => $self->{Debug},
         );
         
+        my $version;
+        {
+            no strict 'vars';
+            $version = defined $App::Bondage::VERSION
+                ? "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE"
+                : "Bondage dev-git running on $Config{osname} $Config{osvers}";
+        }
         $irc->plugin_add('CTCP',        POE::Component::IRC::Plugin::CTCP->new(
-            Version => "Bondage $VERSION running on $Config{osname} $Config{osvers} -- $HOMEPAGE"
+            Version => $version,
         ));
         $irc->plugin_add('Cycle',       POE::Component::IRC::Plugin::CycleEmpty->new()) if $network->{cycle_empty};
         $irc->plugin_add('NickReclaim', POE::Component::IRC::Plugin::NickReclaim->new());

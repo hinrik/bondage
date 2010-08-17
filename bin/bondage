@@ -12,7 +12,14 @@ use POE::Component::Daemon;
 GetOptions(
     'c|crypt'     => \&encrypt_pass,
     'd|debug'     => \my $debug,
-    'v|version'   => sub { print "Bondage $App::Bondage::VERSION, $App::Bondage::HOMEPAGE\n"; exit },
+    'v|version'   => sub {
+       no strict 'vars';
+        my $version = defined $App::Bondage::VERSION
+            ? "Bondage $App::Bondage::VERSION, $App::Bondage::HOMEPAGE"
+            : 'Bondage dev-git';
+        print $version, "\n";
+        exit;
+    },
     'w|workdir=s' => \(my $work_dir = "$ENV{HOME}/.bondage"),
 ) or pod2usage();
 

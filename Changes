@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.4.7 Wed Sep 29 21:02:41 GMT 2010
     - Use Proc::Daemon instead of POE::Component::Daemon
 
 0.4.6 Tue Aug 17 22:48:52 GMT 2010

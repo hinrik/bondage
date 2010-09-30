@@ -1,4 +1,5 @@
 {{$NEXT}}
+    - Set default values for realname/server/hops in WHO replies
 
 0.4.7 Wed Sep 29 21:02:41 GMT 2010
     - Use Proc::Daemon instead of POE::Component::Daemon

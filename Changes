@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.4.9 Thu Sep 30 20:52:50 GMT 2010
     - Fix decreasing version numbers in some packages
 
 0.4.8 Thu Sep 30 19:40:52 GMT 2010

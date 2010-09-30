@@ -4,6 +4,8 @@ use strict;
 use warnings FATAL => 'all';
 use POE::Component::IRC::Plugin qw( :ALL );
 
+our $VERSION = '1.1';
+
 sub new {
     my ($package, %self) = @_;
     return bless \%self, $package;

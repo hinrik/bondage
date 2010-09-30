@@ -8,6 +8,8 @@ use POE::Component::IRC::Common qw( u_irc );
 use POE::Component::IRC::Plugin qw( :ALL );
 use POE::Filter::IRCD;
 
+our $VERSION = '1.3';
+
 sub new {
     my ($package, %self) = @_;
     if (!$self{Socket}) {

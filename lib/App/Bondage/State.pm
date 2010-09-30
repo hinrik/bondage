@@ -6,6 +6,8 @@ use POE::Filter::IRCD;
 use POE::Component::IRC::Common qw(parse_user u_irc);
 use POE::Component::IRC::Plugin qw(:ALL);
 
+our $VERSION = '1.0';
+
 sub new {
     my ($package) = @_;
     return bless { }, $package;

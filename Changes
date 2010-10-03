@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.4.10 Sun Oct 3 15:31:37 GMT 2010
     - After daemonizing, notify the POE kernel that we have forked
 
 0.4.9 Thu Sep 30 20:52:50 GMT 2010

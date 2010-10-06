@@ -40,7 +40,7 @@ sub PCI_register {
     tie @{ $self->{recall} }, 'Tie::File', scalar tempfile() if $self->{Mode} =~ /all|missed/;
     
     $irc->raw_events(1);
-    $irc->plugin_register($self, 'SERVER', qw(290 bot_ctcp_action bot_public connected ctcp_action msg public part proxy_authed proxy_close raw));
+    $irc->plugin_register($self, 'SERVER', qw(cap bot_ctcp_action bot_public connected ctcp_action msg public part proxy_authed proxy_close raw));
     return 1;
 }
 
@@ -50,10 +50,21 @@ sub PCI_unregister {
     return 1;
 }
 
-sub S_290 {
+sub S_cap {
     my ($self, $irc) = splice @_, 0, 2;
-    my $text         = ${ $_[0] };
-    $self->{idmsg} = 1;
+    my $cmd = ${ $_[0] };
+
+    if ($cmd eq 'ACK') {
+        my $list = ${ $_[1] } eq '*' ? ${ $_[2] } : ${ $_[1] };
+        my @enabled = split / /, $list;
+
+        if (grep { $_ =~ /^=?identify-msg$/ } @enabled) {
+            $self->{idmsg} = 1;
+        }
+        if (grep { $_ =~ /^-identify-msg$/ } @enabled) {
+            $self->{idmsg} = 0;
+        }
+    }
     return PCI_EAT_NONE;
 }
 
@@ -253,7 +264,7 @@ sub recall {
     
     push @lines, ":$server MODE $me :" . $irc->umode() if $irc->umode();
     push @lines, @{ $self->{recall} };
-    push @lines, ":$server 290 $me :IDENTIFY-MSG" if $self->{idmsg};
+    push @lines, ":$server CAP * ACK :identify-msg" if $self->{idmsg};
 
     if ($self->{Mode} eq 'all' && $#{ $self->{recall} } > $self->{last_detach}) {
         # remove all PMs received since we last detached
